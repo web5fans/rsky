@@ -14,3 +14,4 @@ pub mod pre_create_account;
 pub mod pre_direct_writes;
 pub mod upload_blob;
 pub mod pre_index_action;
+pub mod index_query;

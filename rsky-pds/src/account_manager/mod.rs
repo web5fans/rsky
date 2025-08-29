@@ -174,6 +174,8 @@ impl AccountManager {
         }
         invite::record_invite_use(did.clone(), invite_code, now, db.as_ref()).await?;
         auth::store_refresh_token(refresh_payload, None, db.as_ref()).await?;
+        let access_payload = auth::decode_access_token(access_jwt.clone(), jwt_key)?;
+        auth::store_access_token(access_payload, None, db.as_ref()).await?;
         repo::update_root(did, repo_cid, repo_rev, db.as_ref()).await?;
         Ok((access_jwt, refresh_jwt))
     }
@@ -262,7 +264,9 @@ impl AccountManager {
             expires_in: None,
         })?;
         let refresh_payload = auth::decode_refresh_token(refresh_jwt.clone(), jwt_key)?;
-        auth::store_refresh_token(refresh_payload, app_password_name, db.as_ref()).await?;
+        auth::store_refresh_token(refresh_payload, app_password_name.clone(), db.as_ref()).await?;
+        let access_payload = auth::decode_access_token(access_jwt.clone(), jwt_key)?;
+        auth::store_access_token(access_payload, app_password_name, db.as_ref()).await?;
         Ok((access_jwt, refresh_jwt))
     }
 
@@ -317,6 +321,8 @@ impl AccountManager {
                 expires_in: None,
             })?;
             let refresh_payload = auth::decode_refresh_token(refresh_jwt.clone(), jwt_key)?;
+            let access_payload = auth::decode_access_token(access_jwt.clone(), jwt_key)?;
+
             match try_join!(
                 auth::add_refresh_grace_period(
                     RefreshGracePeriodOpts {
@@ -328,9 +334,10 @@ impl AccountManager {
                 ),
                 auth::store_refresh_token(
                     refresh_payload,
-                    token.app_password_name,
+                    token.app_password_name.clone(),
                     self.db.as_ref()
-                )
+                ),
+                auth::store_access_token(access_payload, token.app_password_name, self.db.as_ref())
             ) {
                 Ok(_) => Ok(Some((access_jwt, refresh_jwt))),
                 Err(e) => match e.downcast_ref() {

@@ -80,6 +80,9 @@ pub struct Actor {
     #[diesel(column_name = deleteAfter)]
     #[serde(rename = "deleteAfter")]
     pub delete_after: Option<String>,
+    #[diesel(column_name = ckbAddress)]
+    #[serde(rename = "ckbAddress")]
+    pub ckb_address: Option<String>,
 }
 
 #[derive(
@@ -343,6 +346,7 @@ pub struct RecordBlob {
 #[derive(
     Queryable, Identifiable, Selectable, Clone, Debug, PartialEq, Default, Serialize, Deserialize,
 )]
+#[diesel(primary_key(id))]
 #[diesel(table_name = crate::schema::pds::refresh_token)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct RefreshToken {
@@ -357,6 +361,9 @@ pub struct RefreshToken {
     #[diesel(column_name = appPasswordName)]
     #[serde(rename = "appPasswordName")]
     pub app_password_name: Option<String>,
+    #[diesel(column_name = loginTimes)]
+    #[serde(rename = "loginTimes")]
+    pub login_times: Option<i32>,
 }
 
 #[derive(

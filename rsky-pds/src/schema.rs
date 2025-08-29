@@ -2,6 +2,15 @@
 
 pub mod pds {
     diesel::table! {
+        pds.access_token (did) {
+            did -> Varchar,
+            expiresAt -> Varchar,
+            nextId -> Nullable<Varchar>,
+            appPasswordName -> Nullable<Varchar>,
+        }
+    }
+
+    diesel::table! {
         pds.account (did) {
             did -> Varchar,
             email -> Varchar,
@@ -129,6 +138,7 @@ pub mod pds {
             expiresAt -> Varchar,
             nextId -> Nullable<Varchar>,
             appPasswordName -> Nullable<Varchar>,
+            loginTimes -> Nullable<Int4>,
         }
     }
 
@@ -163,6 +173,7 @@ pub mod pds {
     }
 
     diesel::allow_tables_to_appear_in_same_query!(
+        access_token,
         account,
         account_pref,
         actor,

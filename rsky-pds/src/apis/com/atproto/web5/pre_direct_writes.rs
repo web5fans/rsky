@@ -10,7 +10,6 @@ use crate::repo::prepare::{
     PrepareUpdateOpts,
 };
 use crate::SharedSequencer;
-use anyhow::bail;
 use aws_sdk_s3::Config;
 use futures::stream::{self, StreamExt};
 use lexicon_cid::Cid;

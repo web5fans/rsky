@@ -1,4 +1,5 @@
 use crate::db::DbConn;
+use crate::models;
 use crate::schema::pds::account::dsl as AccountSchema;
 use crate::schema::pds::account::table as AccountTable;
 use crate::schema::pds::actor::dsl as ActorSchema;
@@ -497,4 +498,56 @@ pub fn format_account_status(account: Option<ActorAccount>) -> FormattedAccountS
             status: None,
         },
     }
+}
+
+pub async fn get_first_item(db: &DbConn) -> Result<i64> {
+    let number = db
+        .run(move |conn| AccountSchema::account.count().get_result(conn))
+        .await?;
+    Ok(number)
+}
+
+pub async fn get_second_item(db: &DbConn) -> Result<i64> {
+    use crate::schema::pds::access_token::dsl as AccessTokenSchema;
+
+    let system_time = SystemTime::now();
+    let dt: DateTime<UtcOffset> = system_time.into();
+    let now = format!("{}", dt.format(RFC3339_VARIANT));
+    let number = db
+        .run(move |conn| {
+            AccessTokenSchema::access_token
+                .filter(AccessTokenSchema::expiresAt.gt(now))
+                .count()
+                .get_result(conn)
+        })
+        .await?;
+    Ok(number)
+}
+
+pub async fn get_third_item(db: &DbConn, did: String) -> Result<i32> {
+    use crate::schema::pds::refresh_token::dsl as RefreshTokenSchema;
+    let latest: Option<models::RefreshToken> = db
+        .run(move |conn| {
+            RefreshTokenSchema::refresh_token
+                .filter(RefreshTokenSchema::did.eq(&did))
+                .order(RefreshTokenSchema::expiresAt.desc())
+                .select(models::RefreshToken::as_select())
+                .first(conn)
+                .optional()
+        })
+        .await?;
+    Ok(latest.unwrap_or_default().login_times.unwrap_or_default())
+}
+
+pub async fn get_fourth_item(db: &DbConn, did: String) -> Result<String> {
+    let latest: Option<models::Actor> = db
+        .run(move |conn| {
+            ActorSchema::actor
+                .filter(ActorSchema::did.eq(&did))
+                .select(models::Actor::as_select())
+                .get_result(conn)
+                .optional()
+        })
+        .await?;
+    Ok(latest.unwrap_or_default().created_at)
 }

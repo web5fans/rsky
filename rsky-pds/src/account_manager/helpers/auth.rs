@@ -39,6 +39,12 @@ pub struct RefreshToken {
     pub jti: String,
 }
 
+pub struct AccessToken {
+    pub scope: AuthScope, // AuthScope::Refresh
+    pub sub: String,
+    pub exp: Duration,
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ServiceJwtPayload {
     pub iss: String,
@@ -214,6 +220,22 @@ pub fn decode_refresh_token(jwt: String, jwt_key: Keypair) -> Result<RefreshToke
     })
 }
 
+pub fn decode_access_token(jwt: String, jwt_key: Keypair) -> Result<AccessToken> {
+    let key = ES256kKeyPair::from_bytes(jwt_key.secret_bytes().as_slice())?;
+    let public_key = key.public_key();
+    let claims = public_key.verify_token::<CustomClaimObj>(&jwt, None)?;
+    assert_eq!(
+        claims.custom.scope,
+        AuthScope::Access.as_str().to_owned(),
+        "not a access token"
+    );
+    Ok(AccessToken {
+        scope: AuthScope::from_str(&claims.custom.scope)?,
+        sub: claims.subject.unwrap(),
+        exp: claims.expires_at.unwrap(),
+    })
+}
+
 pub async fn store_refresh_token(
     payload: RefreshToken,
     app_password_name: Option<String>,
@@ -224,14 +246,48 @@ pub async fn store_refresh_token(
     let exp = from_micros_to_utc((payload.exp.as_millis() / 1000) as i64);
 
     db.run(move |conn| {
+        let latest: Option<models::RefreshToken> = RefreshTokenSchema::refresh_token
+            .filter(RefreshTokenSchema::did.eq(&payload.sub))
+            .order(RefreshTokenSchema::expiresAt.desc())
+            .select(models::RefreshToken::as_select())
+            .first(conn)
+            .optional()?;
+
         insert_into(RefreshTokenSchema::refresh_token)
             .values((
                 RefreshTokenSchema::id.eq(payload.jti),
                 RefreshTokenSchema::did.eq(payload.sub),
                 RefreshTokenSchema::appPasswordName.eq(app_password_name),
                 RefreshTokenSchema::expiresAt.eq(format!("{}", exp.format(RFC3339_VARIANT))),
+                RefreshTokenSchema::loginTimes.eq(latest.unwrap_or_default().login_times.unwrap_or_default().saturating_add(1)),
             ))
             .on_conflict_do_nothing() // E.g. when re-granting during a refresh grace period
+            .execute(conn)
+    })
+    .await?;
+
+    Ok(())
+}
+
+pub async fn store_access_token(
+    payload: AccessToken,
+    app_password_name: Option<String>,
+    db: &DbConn,
+) -> Result<()> {
+    use crate::schema::pds::access_token::dsl as AccessTokenSchema;
+
+    let exp = from_micros_to_utc((payload.exp.as_millis() / 1000) as i64);
+
+    db.run(move |conn| {
+        insert_into(AccessTokenSchema::access_token)
+            .values((
+                AccessTokenSchema::did.eq(payload.sub),
+                AccessTokenSchema::appPasswordName.eq(app_password_name),
+                AccessTokenSchema::expiresAt.eq(format!("{}", exp.format(RFC3339_VARIANT))),
+            ))
+            .on_conflict(AccessTokenSchema::did)
+            .do_update()
+            .set((AccessTokenSchema::expiresAt.eq(format!("{}", exp.format(RFC3339_VARIANT))),))
             .execute(conn)
     })
     .await?;

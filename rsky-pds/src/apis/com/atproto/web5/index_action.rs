@@ -14,7 +14,7 @@ use rocket::serde::json::Json;
 use rocket::State;
 use rsky_lexicon::com::atproto::web5::{
     IndexActionInput, IndexActionInputRef, IndexActionOutput, IndexActionOutputRefResult,
-    RefCreateSessionResult, RefDeleteAccountIndex, RefDeleteAccountResult,
+    RefCreateSessionResult, RefDeleteAccountResult,
 };
 use serde_json::json;
 use sha2::{Digest, Sha256};
@@ -65,9 +65,7 @@ async fn inner_index_action(
                 }
                 let doc_keys: Vec<String> = didoc.verification_methods.values().cloned().collect();
                 if !doc_keys.contains(&signing_key) {
-                    return Err(ApiError::InvalidRequest(
-                        "Signing key is inconsistent with the did doc".to_string(),
-                    ));
+                    return Err(ApiError::SigningKeyInconsistent);
                 }
                 (Some(json!(didoc)), handle)
             }
@@ -146,7 +144,7 @@ async fn inner_index_action(
             }
         }
     } else {
-        Err(ApiError::InvalidLogin)
+        Err(ApiError::AccountNotFound)
     }
 }
 

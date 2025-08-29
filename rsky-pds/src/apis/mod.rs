@@ -115,6 +115,7 @@ pub enum ApiError {
     AuthRequiredError(String),
     InvalidCkbError(String),
     InvalidS3Error(String),
+    SigningKeyInconsistent,
 }
 
 #[derive(Serialize)]
@@ -502,6 +503,21 @@ impl<'r, 'o: 'r> ::rocket::response::Responder<'r, 'o> for ApiError {
                 let body = Json(ErrorBody {
                     error: "InvalidS3Error".to_string(),
                     message,
+                });
+                let mut res =
+                    <Json<ErrorBody> as ::rocket::response::Responder>::respond_to(body, __req)?;
+                res.set_header(ContentType(rocket::http::MediaType::const_new(
+                    "application",
+                    "json",
+                    &[],
+                )));
+                res.set_status(Status { code: 400u16 });
+                Ok(res)
+            }
+            ApiError::SigningKeyInconsistent => {
+                let body = Json(ErrorBody {
+                    error: "SigningKeyInconsistent".to_string(),
+                    message: "Signing key is inconsistent with did doc on chain".to_string(),
                 });
                 let mut res =
                     <Json<ErrorBody> as ::rocket::response::Responder>::respond_to(body, __req)?;

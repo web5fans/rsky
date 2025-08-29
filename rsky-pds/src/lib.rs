@@ -369,6 +369,7 @@ pub async fn build_rocket(cfg: Option<RocketConfig>) -> Rocket<Build> {
                 com::atproto::web5::pre_create_account::pre_create_account,
                 com::atproto::web5::create_account::create_account,
                 com::atproto::web5::index_action::index_action,
+                com::atproto::web5::index_query::index_query,
                 com::atproto::web5::pre_index_action::pre_index_action,
                 com::atproto::web5::upload_blob::upload_blob,
                 app::bsky::actor::get_preferences::get_preferences,

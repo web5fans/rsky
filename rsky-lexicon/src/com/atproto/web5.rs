@@ -1,6 +1,5 @@
 use crate::com::atproto::repo::Blob;
 use serde_json::Value;
-use std::collections::BTreeMap;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -323,4 +322,80 @@ pub struct CommitMeta {
 pub struct BlobOutput {
     pub blob_server: String,
     pub blob: Blob,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct IndexQueryInput {
+    /// Handle or other identifier supported by the server for the authenticating user.
+    pub index: IndexQueryInputRef,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[serde(tag = "$type")]
+pub enum IndexQueryInputRef {
+    #[serde(rename = "com.atproto.web5.indexQuery#firstItem")]
+    First(FirstIndex),
+    #[serde(rename = "com.atproto.web5.indexQuery#secondItem")]
+    Second(SecondIndex),
+    #[serde(rename = "com.atproto.web5.indexQuery#thirdItem")]
+    Third(ThirdIndex),
+    #[serde(rename = "com.atproto.web5.indexQuery#fourthItem")]
+    Fourth(FourthIndex),
+}
+
+#[derive(Debug, Deserialize, PartialEq, Serialize, Clone)]
+pub struct FirstIndex {}
+
+#[derive(Debug, Deserialize, PartialEq, Serialize, Clone)]
+pub struct SecondIndex {}
+
+#[derive(Debug, Deserialize, PartialEq, Serialize, Clone)]
+pub struct ThirdIndex {
+    pub did: String,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Serialize, Clone)]
+pub struct FourthIndex {
+    pub did: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct IndexQueryOutput {
+    /// Handle or other identifier supported by the server for the authenticating user.
+    pub result: IndexQueryOutputRef,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[serde(tag = "$type")]
+pub enum IndexQueryOutputRef {
+    #[serde(rename = "com.atproto.web5.indexQuery#firstItemResult")]
+    First(FirstResult),
+    #[serde(rename = "com.atproto.web5.indexQuery#secondItemResult")]
+    Second(SecondResult),
+    #[serde(rename = "com.atproto.web5.indexQuery#thirdItemResult")]
+    Third(ThirdResult),
+    #[serde(rename = "com.atproto.web5.indexQuery#fourthItemResult")]
+    Fourth(FourthResult),
+}
+
+#[derive(Debug, Deserialize, PartialEq, Serialize, Clone)]
+pub struct FirstResult {
+    pub result: usize,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Serialize, Clone)]
+pub struct SecondResult {
+    pub result: usize,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Serialize, Clone)]
+pub struct ThirdResult {
+    pub result: usize,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Serialize, Clone)]
+pub struct FourthResult {
+    pub result: String,
 }
