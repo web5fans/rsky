@@ -151,63 +151,74 @@ pub async fn get_didoc_from_chain(ckb_addr: &str) -> Result<Web5DocumentData, Ap
         .get(query_url)
         .send()
         .await
-        .map_err(|_| ApiError::InvalidCkbError(format!("CKB Testnet")))?;
+        .map_err(|_| ApiError::InvalidCkbError(format!("CKB Testnet no connection, retry.")))?;
     let data = response
         .text()
         .await
-        .map_err(|_| ApiError::InvalidCkbError(format!("CKB Testnet Response")))?;
+        .map_err(|_| ApiError::InvalidCkbError(format!("CKB Testnet Response no text.")))?;
     if data.len() == 0 {
         return Err(ApiError::CkbAddrNoCell);
     }
     let json: Value = serde_json::from_str(&data)
-        .map_err(|_| ApiError::InvalidCkbError(format!("CKB Testnet Response Convert")))?;
+        .map_err(|_| ApiError::InvalidCkbError(format!("CKB Testnet Response Convert failed.")))?;
 
     let referring_cells = json["data"]
         .as_object()
         .ok_or(ApiError::InvalidCkbError(format!(
-            "CKB Testnet Response Convert data"
+            "CKB Testnet Response Convert no found data"
         )))?["referring_cells"]
         .as_array()
         .ok_or(ApiError::InvalidCkbError(format!(
-            "CKB Testnet Response Convert referring_cells"
+            "CKB Testnet Response Convert referring_cells format error."
         )))?;
 
     if referring_cells.len() != 0 {
         let tx_hash_str = referring_cells[0]["tx_hash"].as_str().ok_or({
-            ApiError::InvalidCkbError(format!("CKB Testnet Response Convert tx_hash"))
+            ApiError::InvalidCkbError(format!("CKB Testnet Response Convert no found tx_hash."))
         })?;
         let cell_index = referring_cells[0]["cell_index"].as_u64().ok_or({
-            ApiError::InvalidCkbError(format!("CKB Testnet Response Convert cell_index"))
+            ApiError::InvalidCkbError(format!("CKB Testnet Response Convert no found cell_index"))
         })? as u32;
 
         let client = CkbRpcAsyncClient::new("https://testnet.ckb.dev/");
-        let tx_hash = H256::from_str(&tx_hash_str[2..])
-            .map_err(|_| ApiError::InvalidCkbError(format!("CKB Testnet Response Convert Hash")))?;
+        let tx_hash = H256::from_str(&tx_hash_str[2..]).map_err(|_| {
+            ApiError::InvalidCkbError(format!("CKB Testnet Response Convert Hash format error."))
+        })?;
         let index = Uint32::from(cell_index);
         let cell = client
             .get_live_cell(OutPoint { tx_hash, index }, true)
             .await
-            .map_err(|_| ApiError::InvalidCkbError(format!("CKB get_live_cell")))?;
+            .map_err(|_| {
+                ApiError::InvalidCkbError(format!(
+                    "CKB get_live_cell error, please refresh and retry."
+                ))
+            })?;
         if let Some(cell) = cell.cell {
             if let Some(cell_data) = cell.data {
                 let bytes = cell_data.content.as_bytes();
                 let did_data = DidWeb5Data::from_slice(bytes).map_err(|_| {
-                    ApiError::InvalidCkbError("DidWeb5Data convert failed".to_string())
+                    ApiError::InvalidCkbError(
+                        "DidWeb5Data convert failed, please update cell.".to_string(),
+                    )
                 })?;
                 let DidWeb5DataUnion::DidWeb5DataV1(did_data_v1) = did_data.to_enum();
                 let did_doc = did_data_v1.document();
                 Ok(
-                    serde_ipld_dagcbor::from_slice(&did_doc.raw_data()).map_err(|_| {
-                        ApiError::InvalidCkbError(
-                            "Web5DocumentData dog cbor decode failed".to_string(),
-                        )
+                    serde_ipld_dagcbor::from_slice(&did_doc.raw_data()).map_err(|e| {
+                        ApiError::InvalidCkbError(format!(
+                            "Web5DocumentData dog cbor decode failed: {e:?}, please update cell."
+                        ))
                     })?,
                 )
             } else {
-                return Err(ApiError::InvalidCkbError("Cell data not found".to_string()));
+                return Err(ApiError::InvalidCkbError(
+                    "Cell data not found, please update cell.".to_string(),
+                ));
             }
         } else {
-            return Err(ApiError::InvalidCkbError("Cell info not found".to_string()));
+            return Err(ApiError::InvalidCkbError(
+                "Cell info not found, please update cell.".to_string(),
+            ));
         }
     } else {
         Err(ApiError::CkbDidocCellNotFound)

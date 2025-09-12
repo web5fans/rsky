@@ -400,7 +400,7 @@ impl<'r, 'o: 'r> ::rocket::response::Responder<'r, 'o> for ApiError {
             ApiError::CkbAddrNotFound => {
                 let body = Json(ErrorBody {
                     error: "CkbAddrNotFound".to_string(),
-                    message: "Ckb address could not be found".to_string(),
+                    message: "Ckb address could not be found, you need to provide ckb address".to_string(),
                 });
                 let mut res =
                     <Json<ErrorBody> as ::rocket::response::Responder>::respond_to(body, __req)?;
@@ -415,7 +415,7 @@ impl<'r, 'o: 'r> ::rocket::response::Responder<'r, 'o> for ApiError {
             ApiError::CkbDidocCellNotFound => {
                 let body = Json(ErrorBody {
                     error: "CkbDidocCellNotFound".to_string(),
-                    message: "Liv ckb did doc could not be found".to_string(),
+                    message: "Live ckb did document could not be found, you need to send one include document.".to_string(),
                 });
                 let mut res =
                     <Json<ErrorBody> as ::rocket::response::Responder>::respond_to(body, __req)?;
@@ -430,7 +430,7 @@ impl<'r, 'o: 'r> ::rocket::response::Responder<'r, 'o> for ApiError {
             ApiError::CkbAddrNoCell => {
                 let body = Json(ErrorBody {
                     error: "CkbAddrNoCell".to_string(),
-                    message: "No live cell be found".to_string(),
+                    message: "No live cell be found, make sure have enough ckb on account.".to_string(),
                 });
                 let mut res =
                     <Json<ErrorBody> as ::rocket::response::Responder>::respond_to(body, __req)?;
@@ -486,7 +486,7 @@ impl<'r, 'o: 'r> ::rocket::response::Responder<'r, 'o> for ApiError {
             }
             ApiError::InvalidCkbError(message) => {
                 let body = Json(ErrorBody {
-                    error: "InvalidCkbAddr".to_string(),
+                    error: "InvalidCkbError".to_string(),
                     message,
                 });
                 let mut res =
@@ -517,7 +517,7 @@ impl<'r, 'o: 'r> ::rocket::response::Responder<'r, 'o> for ApiError {
             ApiError::SigningKeyInconsistent => {
                 let body = Json(ErrorBody {
                     error: "SigningKeyInconsistent".to_string(),
-                    message: "Signing key is inconsistent with did doc on chain".to_string(),
+                    message: "Signing key is inconsistent with did doc on chain, please update cell".to_string(),
                 });
                 let mut res =
                     <Json<ErrorBody> as ::rocket::response::Responder>::respond_to(body, __req)?;
