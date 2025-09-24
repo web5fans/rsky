@@ -6,7 +6,7 @@ use crate::db::DbConn;
 use crate::plc::web5_types::statement_check;
 use crate::{
     account_manager::helpers::account::{AccountStatus, AvailabilityFlags},
-    plc::web5_types::{extract_timestamp, get_didoc_from_chain, timestamp_check},
+    plc::web5_types::{extract_timestamp, get_didoc_from_indexer, timestamp_check},
 };
 use crate::{sequencer, SharedSequencer};
 use aws_sdk_s3::Config;
@@ -36,7 +36,6 @@ async fn inner_index_action(
         index,
     } = body.into_inner();
     let did = did.to_lowercase();
-    let ckb_addr = ckb_addr.ok_or(ApiError::CkbAddrNotFound)?;
 
     let user = account_manager
         .get_account(
@@ -48,13 +47,13 @@ async fn inner_index_action(
         )
         .await;
     if let Ok(Some(user)) = user {
-        if user.ckb_address != Some(ckb_addr.clone()) {
+        if ckb_addr.is_some() && user.ckb_address != Some(ckb_addr.unwrap().clone()) {
             return Err(ApiError::InvalidRequest(
                 "Address is inconsistent with the original".to_string(),
             ));
         }
 
-        let (did_doc, handle) = match get_didoc_from_chain(&ckb_addr).await {
+        let (did_doc, handle) = match get_didoc_from_indexer(&did).await {
             Ok(didoc) => {
                 if didoc.also_known_as.len() == 0 || !didoc.also_known_as[0].starts_with("at://") {
                     return Err(ApiError::IncompatibleDidDoc);
@@ -96,7 +95,9 @@ async fn inner_index_action(
             None,
         )? {
             tracing::error!("web5 create session verify signature failed");
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(Some(
+                "web5 create session verify signature failed".to_string(),
+            )));
         }
         match index {
             IndexActionInputRef::CreateSessionIndex(_) => {
@@ -107,7 +108,7 @@ async fn inner_index_action(
                     }
                     Err(e) => {
                         tracing::error!("{e:?}");
-                        return Err(ApiError::RuntimeError);
+                        return Err(ApiError::RuntimeError(Some(e.to_string())));
                     }
                 }
                 let ref_csr = RefCreateSessionResult {

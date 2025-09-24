@@ -155,7 +155,7 @@ pub async fn get_account_invite_codes(
         Ok(res) => Ok(Json(res)),
         Err(error) => {
             tracing::error!("@LOG: ERROR: {error}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
     }
 }

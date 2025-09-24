@@ -70,7 +70,7 @@ pub async fn update_email(
         Ok(_) => Ok(()),
         Err(error) => {
             tracing::error!("@LOG: ERROR: {error}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
     }
 }

@@ -47,7 +47,7 @@ pub async fn sign_plc_operation(
         },
         Err(error) => {
             tracing::error!("Error getting last PLC operation\n{error}");
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(None));
         }
     };
 
@@ -115,7 +115,7 @@ pub async fn sign_plc_operation(
         Ok(res) => res,
         Err(error) => {
             tracing::error!("Error creating signed operation\n{error}");
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(None));
         }
     };
 

@@ -146,7 +146,7 @@ pub async fn get_post_thread(
         ));
     }
     match cfg.bsky_app_view {
-        None => return Err(ApiError::RuntimeError),
+        None => return Err(ApiError::RuntimeError(None)),
         Some(_) => match inner_get_post_thread(
             uri,
             depth,
@@ -190,12 +190,12 @@ pub async fn get_post_thread(
                                 xrpc_error.message.unwrap_or("Unknown Error".to_string()),
                             ))
                         } else {
-                            Err(ApiError::RuntimeError)
+                            Err(ApiError::RuntimeError(None))
                         }
                     }
                     _ => {
                         tracing::error!("@LOG: ERROR: {err}");
-                        Err(ApiError::RuntimeError)
+                        Err(ApiError::RuntimeError(None))
                     }
                 }
             }

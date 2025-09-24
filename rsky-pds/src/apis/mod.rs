@@ -57,7 +57,7 @@ pub async fn bsky_api_get_forwarder(
         }
         Err(error) => {
             tracing::error!("@LOG: ERROR: {error}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
     }
 }
@@ -89,7 +89,7 @@ pub async fn bsky_api_post_forwarder(
 
 #[derive(Clone, Debug)]
 pub enum ApiError {
-    RuntimeError,
+    RuntimeError(Option<String>),
     InvalidLogin,
     AccountTakendown,
     InvalidRequest(String),
@@ -116,6 +116,7 @@ pub enum ApiError {
     InvalidCkbError(String),
     InvalidS3Error(String),
     SigningKeyInconsistent,
+    IndexerRequestError(String),
 }
 
 #[derive(Serialize)]
@@ -127,10 +128,14 @@ pub struct ErrorBody {
 impl<'r, 'o: 'r> ::rocket::response::Responder<'r, 'o> for ApiError {
     fn respond_to(self, __req: &'r Request<'_>) -> response::Result<'o> {
         match self {
-            ApiError::RuntimeError => {
+            ApiError::RuntimeError(opt_message) => {
+                let message = match opt_message {
+                    Some(msg) => format!("Something went wrong: {msg}"),
+                    None => format!("Something went wrong"),
+                };
                 let body = Json(ErrorBody {
                     error: "InternalServerError".to_string(),
-                    message: "Something went wrong".to_string(),
+                    message,
                 });
                 let mut res =
                     <Json<ErrorBody> as ::rocket::response::Responder>::respond_to(body, __req)?;
@@ -400,7 +405,8 @@ impl<'r, 'o: 'r> ::rocket::response::Responder<'r, 'o> for ApiError {
             ApiError::CkbAddrNotFound => {
                 let body = Json(ErrorBody {
                     error: "CkbAddrNotFound".to_string(),
-                    message: "Ckb address could not be found, you need to provide ckb address".to_string(),
+                    message: "Ckb address could not be found, you need to provide ckb address"
+                        .to_string(),
                 });
                 let mut res =
                     <Json<ErrorBody> as ::rocket::response::Responder>::respond_to(body, __req)?;
@@ -414,9 +420,9 @@ impl<'r, 'o: 'r> ::rocket::response::Responder<'r, 'o> for ApiError {
             }
             ApiError::CkbDidocCellNotFound => {
                 let body = Json(ErrorBody {
-                    error: "CkbDidocCellNotFound".to_string(),
-                    message: "Live ckb did document could not be found, you need to send one include document.".to_string(),
-                });
+                            error: "CkbDidocCellNotFound".to_string(),
+                            message: "Live ckb did document could not be found, you need to send one include document.".to_string(),
+                        });
                 let mut res =
                     <Json<ErrorBody> as ::rocket::response::Responder>::respond_to(body, __req)?;
                 res.set_header(ContentType(rocket::http::MediaType::const_new(
@@ -430,7 +436,8 @@ impl<'r, 'o: 'r> ::rocket::response::Responder<'r, 'o> for ApiError {
             ApiError::CkbAddrNoCell => {
                 let body = Json(ErrorBody {
                     error: "CkbAddrNoCell".to_string(),
-                    message: "No live cell be found, make sure have enough ckb on account.".to_string(),
+                    message: "No live cell be found, make sure have enough ckb on account."
+                        .to_string(),
                 });
                 let mut res =
                     <Json<ErrorBody> as ::rocket::response::Responder>::respond_to(body, __req)?;
@@ -517,7 +524,24 @@ impl<'r, 'o: 'r> ::rocket::response::Responder<'r, 'o> for ApiError {
             ApiError::SigningKeyInconsistent => {
                 let body = Json(ErrorBody {
                     error: "SigningKeyInconsistent".to_string(),
-                    message: "Signing key is inconsistent with did doc on chain, please update cell".to_string(),
+                    message:
+                        "Signing key is inconsistent with did doc on chain, please update cell"
+                            .to_string(),
+                });
+                let mut res =
+                    <Json<ErrorBody> as ::rocket::response::Responder>::respond_to(body, __req)?;
+                res.set_header(ContentType(rocket::http::MediaType::const_new(
+                    "application",
+                    "json",
+                    &[],
+                )));
+                res.set_status(Status { code: 400u16 });
+                Ok(res)
+            }
+            ApiError::IndexerRequestError(message) => {
+                let body = Json(ErrorBody {
+                    error: "IndexerRequestError".to_string(),
+                    message,
                 });
                 let mut res =
                     <Json<ErrorBody> as ::rocket::response::Responder>::respond_to(body, __req)?;
@@ -534,8 +558,8 @@ impl<'r, 'o: 'r> ::rocket::response::Responder<'r, 'o> for ApiError {
 }
 
 impl From<Error> for ApiError {
-    fn from(_value: Error) -> Self {
-        ApiError::RuntimeError
+    fn from(value: Error) -> Self {
+        ApiError::RuntimeError(Some(value.to_string()))
     }
 }
 
@@ -545,7 +569,7 @@ impl From<handle::errors::Error> for ApiError {
             ErrorKind::InvalidHandle => ApiError::InvalidHandle,
             ErrorKind::HandleNotAvailable => ApiError::HandleNotAvailable,
             ErrorKind::UnsupportedDomain => ApiError::UnsupportedDomain,
-            ErrorKind::InternalError => ApiError::RuntimeError,
+            ErrorKind::InternalError => ApiError::RuntimeError(None),
         }
     }
 }

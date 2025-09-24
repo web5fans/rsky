@@ -5,7 +5,7 @@ use crate::actor_store::ActorStore;
 use crate::apis::ApiError;
 use crate::auth_verifier::AccessStandardIncludeChecks;
 use crate::db::DbConn;
-use crate::plc::web5_types::get_didoc_from_chain;
+use crate::plc::web5_types::get_didoc_from_indexer;
 use crate::repo::prepare::{
     prepare_create, prepare_delete, prepare_update, PrepareCreateOpts, PrepareDeleteOpts,
     PrepareUpdateOpts,
@@ -42,7 +42,6 @@ async fn inner_direct_writes(
         ckb_addr,
         root,
     } = tx;
-    let ckb_addr = ckb_addr.ok_or(ApiError::CkbAddrNotFound)?;
     let account = account_manager
         .get_account(
             &repo,
@@ -54,13 +53,13 @@ async fn inner_direct_writes(
         .await?;
 
     if let Some(account) = account {
-        if account.ckb_address != Some(ckb_addr.clone()) {
+        if ckb_addr.is_some() && account.ckb_address != Some(ckb_addr.unwrap().clone()) {
             return Err(ApiError::InvalidRequest(
                 "Address is inconsistent with the original".to_string(),
             ));
         }
 
-        match get_didoc_from_chain(&ckb_addr).await {
+        match get_didoc_from_indexer(&repo).await {
             Ok(didoc) => {
                 if didoc.also_known_as.len() == 0 || !didoc.also_known_as[0].starts_with("at://") {
                     return Err(ApiError::IncompatibleDidDoc);

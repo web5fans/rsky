@@ -10,12 +10,12 @@ async fn get_requester_did(auth: &AccessFull) -> Result<String, ApiError> {
     match &auth.access.credentials {
         None => {
             tracing::error!("Failed to find access credentials");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
         Some(res) => match &res.did {
             None => {
                 tracing::error!("Failed to find did");
-                Err(ApiError::RuntimeError)
+                Err(ApiError::RuntimeError(None))
             }
             Some(did) => Ok(did.clone()),
         },
@@ -38,13 +38,13 @@ async fn get_account(
         Ok(account) => match account {
             None => {
                 tracing::error!("Account not found despite valid credentials");
-                Err(ApiError::RuntimeError)
+                Err(ApiError::RuntimeError(None))
             }
             Some(account) => Ok(account),
         },
         Err(error) => {
             tracing::error!("Error getting account\n{error}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
     }
 }
@@ -61,7 +61,7 @@ async fn create_email_token(
         Ok(res) => Ok(res),
         Err(error) => {
             tracing::error!("Failed to create plc operation token\n{error}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
     }
 }
@@ -71,7 +71,7 @@ async fn do_plc_operation(account: &ActorAccount, token: String) -> Result<(), A
     match &account.email {
         None => {
             tracing::error!("Failed to find email for account");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
         Some(email) => match send_plc_operation(email.clone(), TokenParam { token }).await {
             Ok(_) => {
@@ -80,7 +80,7 @@ async fn do_plc_operation(account: &ActorAccount, token: String) -> Result<(), A
             }
             Err(error) => {
                 tracing::error!("Failed to send PLC Operation Token Email\n{error}");
-                Err(ApiError::RuntimeError)
+                Err(ApiError::RuntimeError(None))
             }
         },
     }

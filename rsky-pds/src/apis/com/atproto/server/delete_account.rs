@@ -46,8 +46,11 @@ async fn inner_delete_account(
             .assert_valid_email_token(&did, EmailTokenPurpose::from_str("delete_account")?, &token)
             .await?;
 
-        let mut actor_store =
-            ActorStore::new(did.clone(), S3BlobStore::new(did.clone(), s3_config.inner().clone()), db);
+        let mut actor_store = ActorStore::new(
+            did.clone(),
+            S3BlobStore::new(did.clone(), s3_config.inner().clone()),
+            db,
+        );
         actor_store.destroy().await?;
         account_manager.delete_account(&did).await?;
         let mut lock = sequencer.sequencer.write().await;
@@ -58,7 +61,7 @@ async fn inner_delete_account(
         Ok(())
     } else {
         tracing::error!("account not found");
-        Err(ApiError::RuntimeError)
+        Err(ApiError::RuntimeError(None))
     }
 }
 

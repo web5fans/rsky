@@ -84,7 +84,7 @@ pub async fn update_account_handle(
         Ok(_) => Ok(()),
         Err(error) => {
             tracing::error!("@LOG: ERROR: {error}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
     }
 }

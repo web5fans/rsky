@@ -1,5 +1,5 @@
 use crate::apis::ApiError;
-use crate::plc::web5_types::{generate_challenge, get_didoc_from_chain};
+use crate::plc::web5_types::{generate_challenge, get_didoc_from_indexer};
 use rocket::serde::json::Json;
 use rsky_lexicon::com::atproto::web5::{
     PreIndexActionInput, PreIndexActionInputRef, PreIndexActionOutput, RefDeleteAccountIndex,
@@ -17,7 +17,7 @@ async fn inner_pre_index_action(
     let did = did.to_lowercase();
     let ckb_addr = ckb_addr.ok_or(ApiError::CkbAddrNotFound)?;
 
-    let handle = match get_didoc_from_chain(&ckb_addr).await {
+    let handle = match get_didoc_from_indexer(&did).await {
         Ok(didoc) => {
             if didoc.also_known_as.len() == 0 || !didoc.also_known_as[0].starts_with("at://") {
                 return Err(ApiError::IncompatibleDidDoc);

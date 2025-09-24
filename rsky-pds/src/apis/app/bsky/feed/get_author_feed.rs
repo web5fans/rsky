@@ -112,7 +112,7 @@ pub async fn get_author_feed(
         .await
         {
             Ok(response) => Ok(response),
-            Err(_) => Err(ApiError::RuntimeError),
+            Err(_) => Err(ApiError::RuntimeError(None)),
         },
     }
 }

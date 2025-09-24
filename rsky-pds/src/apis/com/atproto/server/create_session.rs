@@ -50,7 +50,7 @@ async fn inner_create_session(
             Ok(res) => res,
             Err(e) => {
                 tracing::error!("{e:?}");
-                return Err(ApiError::RuntimeError);
+                return Err(ApiError::RuntimeError(None));
             }
         };
         if !valid_account_pass {
@@ -63,7 +63,7 @@ async fn inner_create_session(
                 }
                 Err(e) => {
                     tracing::error!("{e:?}");
-                    return Err(ApiError::RuntimeError);
+                    return Err(ApiError::RuntimeError(None));
                 }
             }
             if app_password_name.is_none() {
@@ -83,7 +83,7 @@ async fn inner_create_session(
             }
             Err(e) => {
                 tracing::error!("{e:?}");
-                return Err(ApiError::RuntimeError);
+                return Err(ApiError::RuntimeError(None));
             }
         }
         Ok(CreateSessionOutput {

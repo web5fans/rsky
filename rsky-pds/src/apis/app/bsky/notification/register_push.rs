@@ -115,13 +115,13 @@ pub async fn register_push(
         return Err(ApiError::InvalidRequest("invalid platform".to_string()));
     }
     match &cfg.bsky_app_view {
-        None => return Err(ApiError::RuntimeError),
+        None => return Err(ApiError::RuntimeError(None)),
         Some(bsky_app_view) => {
             match inner_register_push(body, auth, cfg, bsky_app_view.url.clone(), id_resolver).await
             {
                 Ok(_) => Ok(()),
                 Err(_) => {
-                    return Err(ApiError::RuntimeError);
+                    return Err(ApiError::RuntimeError(None));
                 }
             }
         }

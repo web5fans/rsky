@@ -87,7 +87,7 @@ pub async fn server_create_account(
         Err(error) => {
             tracing::error!("Failed to create repo\n{:?}", error);
             actor_store.destroy().await?;
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(None));
         }
     };
 
@@ -107,7 +107,7 @@ pub async fn server_create_account(
                 Err(_) => {
                     tracing::error!("Failed to create did:plc");
                     actor_store.destroy().await?;
-                    return Err(ApiError::RuntimeError);
+                    return Err(ApiError::RuntimeError(None));
                 }
             }
         }
@@ -118,7 +118,7 @@ pub async fn server_create_account(
         Err(error) => {
             tracing::error!("Error resolving DID Doc\n{error}");
             actor_store.destroy().await?;
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(None));
         }
     };
 
@@ -144,7 +144,7 @@ pub async fn server_create_account(
         Err(error) => {
             tracing::error!("Error creating account\n{error}");
             actor_store.destroy().await?;
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(None));
         }
     }
 
@@ -159,7 +159,7 @@ pub async fn server_create_account(
             }
             Err(error) => {
                 tracing::error!("Sequence Identity Event failed\n{error}");
-                return Err(ApiError::RuntimeError);
+                return Err(ApiError::RuntimeError(None));
             }
         }
         match lock
@@ -171,7 +171,7 @@ pub async fn server_create_account(
             }
             Err(error) => {
                 tracing::error!("Sequence Account Event failed\n{error}");
-                return Err(ApiError::RuntimeError);
+                return Err(ApiError::RuntimeError(None));
             }
         }
         match lock.sequence_commit(did.clone(), commit.clone()).await {
@@ -180,7 +180,7 @@ pub async fn server_create_account(
             }
             Err(error) => {
                 tracing::error!("Sequence Commit failed\n{error}");
-                return Err(ApiError::RuntimeError);
+                return Err(ApiError::RuntimeError(None));
             }
         }
         match lock
@@ -195,7 +195,7 @@ pub async fn server_create_account(
             }
             Err(error) => {
                 tracing::error!("Sequence sync event data from commit failed\n{error}");
-                return Err(ApiError::RuntimeError);
+                return Err(ApiError::RuntimeError(None));
             }
         }
     }
@@ -208,7 +208,7 @@ pub async fn server_create_account(
         }
         Err(error) => {
             tracing::error!("Update Repo Root failed\n{error}");
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(None));
         }
     }
 
@@ -219,7 +219,7 @@ pub async fn server_create_account(
             Ok(res) => converted_did_doc = Some(res),
             Err(error) => {
                 tracing::error!("Did Doc failed conversion\n{error}");
-                return Err(ApiError::RuntimeError);
+                return Err(ApiError::RuntimeError(None));
             }
         },
     }
@@ -378,7 +378,7 @@ async fn format_did_and_plc_op(
         Ok(res) => res,
         Err(error) => {
             tracing::error!("{error}");
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(None));
         }
     };
 

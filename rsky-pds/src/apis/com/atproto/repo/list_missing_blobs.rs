@@ -38,7 +38,7 @@ pub async fn list_missing_blobs(
         }
         Err(error) => {
             tracing::error!("{error:?}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
     }
 }

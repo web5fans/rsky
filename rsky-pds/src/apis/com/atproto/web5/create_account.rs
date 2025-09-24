@@ -6,7 +6,7 @@ use crate::apis::ApiError;
 use crate::auth_verifier::UserDidAuthOptional;
 use crate::config::ServerConfig;
 use crate::db::DbConn;
-use crate::plc::web5_types::{generate_random_string, get_didoc_from_chain};
+use crate::plc::web5_types::{generate_random_string, resovle_ckb_addr};
 use crate::sequencer::events::sync_evt_data_from_commit;
 use crate::SharedSequencer;
 use aws_sdk_s3::Config;
@@ -44,13 +44,13 @@ pub async fn create_account(
     let did = input.root.did.clone();
     let handle = input.handle.clone();
 
-    match get_didoc_from_chain(&input.ckb_addr).await {
+    match resovle_ckb_addr(&input.ckb_addr).await {
         Ok(_) => {
             return Err(ApiError::InvalidCkbError(format!(
-                "Already apply did, please change address."
+                "Already register did, please change address."
             )))
         }
-        Err(ApiError::CkbDidocCellNotFound) => {},
+        Err(ApiError::CkbDidocCellNotFound) => {}
         Err(error) => return Err(error),
     }
 
@@ -68,7 +68,7 @@ pub async fn create_account(
         Err(error) => {
             tracing::error!("Failed to create repo\n{:?}", error);
             actor_store.destroy().await?;
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(Some(error.to_string())));
         }
     };
 
@@ -94,7 +94,7 @@ pub async fn create_account(
         Err(error) => {
             tracing::error!("Error creating account\n{error}");
             actor_store.destroy().await?;
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(Some(error.to_string())));
         }
     }
 
@@ -108,7 +108,7 @@ pub async fn create_account(
         }
         Err(error) => {
             tracing::error!("Sequence Identity Event failed\n{error}");
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(Some(error.to_string())));
         }
     }
     match lock
@@ -120,7 +120,7 @@ pub async fn create_account(
         }
         Err(error) => {
             tracing::error!("Sequence Account Event failed\n{error}");
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(Some(error.to_string())));
         }
     }
     match lock.sequence_commit(did.clone(), commit.clone()).await {
@@ -129,7 +129,7 @@ pub async fn create_account(
         }
         Err(error) => {
             tracing::error!("Sequence Commit failed\n{error}");
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(Some(error.to_string())));
         }
     }
     match lock
@@ -144,7 +144,7 @@ pub async fn create_account(
         }
         Err(error) => {
             tracing::error!("Sequence sync event data from commit failed\n{error}");
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(Some(error.to_string())));
         }
     }
     match account_manager
@@ -156,7 +156,7 @@ pub async fn create_account(
         }
         Err(error) => {
             tracing::error!("Update Repo Root failed\n{error}");
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(Some(error.to_string())));
         }
     }
 
@@ -167,7 +167,7 @@ pub async fn create_account(
     //         Ok(res) => converted_did_doc = Some(res),
     //         Err(error) => {
     //             tracing::error!("Did Doc failed conversion\n{error}");
-    //             return Err(ApiError::RuntimeError);
+    //             return Err(ApiError::RuntimeError(None));
     //         }
     //     },
     // }

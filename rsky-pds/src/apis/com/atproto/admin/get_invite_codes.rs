@@ -348,7 +348,7 @@ pub async fn get_invite_codes(
         Ok(res) => Ok(Json(res)),
         Err(error) => {
             tracing::error!("Internal Error: {error}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
     }
 }

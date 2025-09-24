@@ -38,7 +38,7 @@ pub async fn create_invite_code(
         Ok(_) => Ok(Json(CreateInviteCodeOutput { code })),
         Err(error) => {
             tracing::error!("Internal Error: {error}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
     }
 }

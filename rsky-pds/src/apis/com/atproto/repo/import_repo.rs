@@ -117,7 +117,7 @@ pub async fn import_repo(
         Ok(res) => res,
         Err(error) => {
             tracing::error!("{:?}", error);
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(None));
         }
     };
 
@@ -131,7 +131,7 @@ pub async fn import_repo(
         Ok(_res) => {}
         Err(error) => {
             tracing::error!("Error importing repo\n{error}");
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(None));
         }
     }
 
@@ -196,7 +196,7 @@ async fn prepare_import_repo_writes(
         Ok(res) => Ok(res),
         Err(error) => {
             tracing::error!("Error preparing import repo writes\n{error}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
     }
 }

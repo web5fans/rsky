@@ -70,7 +70,7 @@ pub async fn get_actor_likes(
         }
     }
     match cfg.bsky_app_view {
-        None => Err(ApiError::RuntimeError),
+        None => Err(ApiError::RuntimeError(None)),
         Some(_) => match inner_get_actor_likes(
             actor,
             limit,
@@ -87,7 +87,7 @@ pub async fn get_actor_likes(
             Ok(response) => Ok(response),
             Err(error) => {
                 tracing::error!("{error}");
-                Err(ApiError::RuntimeError)
+                Err(ApiError::RuntimeError(None))
             }
         },
     }

@@ -62,7 +62,7 @@ pub async fn describe_repo(
         Ok(res) => Ok(Json(res)),
         Err(error) => {
             tracing::error!("{error:?}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
     }
 }

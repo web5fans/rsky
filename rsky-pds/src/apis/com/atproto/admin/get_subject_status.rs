@@ -108,7 +108,7 @@ pub async fn get_subject_status(
         Ok(res) => Ok(Json(res)),
         Err(error) => {
             tracing::error!("@LOG: ERROR: {error}");
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(None));
         }
     }
 }

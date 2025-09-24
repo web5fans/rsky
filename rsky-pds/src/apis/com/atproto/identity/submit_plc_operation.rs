@@ -17,12 +17,12 @@ fn get_requester_did(auth: &AccessStandard) -> Result<String, ApiError> {
     match &auth.access.credentials {
         None => {
             tracing::error!("Failed to find access credentials");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
         Some(res) => match &res.did {
             None => {
                 tracing::error!("Failed to find did");
-                Err(ApiError::RuntimeError)
+                Err(ApiError::RuntimeError(None))
             }
             Some(did) => Ok(did.clone()),
         },
@@ -36,7 +36,7 @@ fn get_public_rotation_key() -> Result<String, ApiError> {
         Ok(res) => res,
         Err(error) => {
             tracing::error!("Error geting rotation private key\n{error}");
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(None));
         }
     };
     match hex::decode(private_rotation_key.as_bytes()) {
@@ -47,12 +47,12 @@ fn get_public_rotation_key() -> Result<String, ApiError> {
             }
             Err(error) => {
                 tracing::error!("Error geting rotation secret key from bytes\n{error}");
-                Err(ApiError::RuntimeError)
+                Err(ApiError::RuntimeError(None))
             }
         },
         Err(error) => {
             tracing::error!("Unable to hex decode rotation key\n{error}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
     }
 }
@@ -64,7 +64,7 @@ fn get_public_signing_key() -> Result<String, ApiError> {
         Ok(res) => res,
         Err(error) => {
             tracing::error!("Error geting signing private key\n{error}");
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(None));
         }
     };
     match hex::decode(private_signing_key.as_bytes()) {
@@ -75,12 +75,12 @@ fn get_public_signing_key() -> Result<String, ApiError> {
             }
             Err(error) => {
                 tracing::error!("Error geting signing secret key from bytes\n{error}");
-                Err(ApiError::RuntimeError)
+                Err(ApiError::RuntimeError(None))
             }
         },
         Err(error) => {
             tracing::error!("Unable to hex decode signing key\n{error}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
     }
 }
@@ -145,13 +145,13 @@ async fn validate_plc_request(
         Ok(res) => match res {
             None => {
                 tracing::error!("Unable to find account with valid token");
-                return Err(ApiError::RuntimeError);
+                return Err(ApiError::RuntimeError(None));
             }
             Some(actor_account) => actor_account,
         },
         Err(error) => {
             tracing::error!("Error looking up account\n{error}");
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(None));
         }
     };
     if let Some(handle) = account.handle {
@@ -187,7 +187,7 @@ async fn do_plc_operation(plc_url: &str, did: &str, op: Operation) -> Result<(),
         }
         Err(error) => {
             tracing::error!("Failed to update did:plc\n{error}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
     }
 }

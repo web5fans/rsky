@@ -75,7 +75,7 @@ pub async fn get_blob(
                 }
                 _ => {
                     tracing::error!("Error: {}", error);
-                    Err(ApiError::RuntimeError)
+                    Err(ApiError::RuntimeError(None))
                 }
             }
             // @TODO: Need to update error handling to return 404 if we have it but it's in tmp

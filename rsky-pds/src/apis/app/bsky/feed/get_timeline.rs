@@ -71,7 +71,7 @@ pub async fn get_timeline(
         }
     }
     match cfg.bsky_app_view {
-        None => return Err(ApiError::RuntimeError),
+        None => return Err(ApiError::RuntimeError(None)),
         Some(_) => match inner_get_timeline(
             algorithm,
             limit,
@@ -87,7 +87,7 @@ pub async fn get_timeline(
         {
             Ok(response) => Ok(response),
             Err(_) => {
-                return Err(ApiError::RuntimeError);
+                return Err(ApiError::RuntimeError(None));
             }
         },
     }

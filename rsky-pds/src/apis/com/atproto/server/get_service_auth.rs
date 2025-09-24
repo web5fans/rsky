@@ -75,7 +75,7 @@ pub async fn get_service_auth(
         Ok(token) => Ok(Json(GetServiceAuthOutput { token })),
         Err(error) => {
             tracing::error!("Internal Error: {error}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
     }
 }

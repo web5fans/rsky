@@ -159,7 +159,7 @@ async fn health(
 async fn default_catcher(_status: Status, request: &Request<'_>) -> ApiError {
     let api_error: &Option<ApiError> = request.local_cache(|| None);
     match api_error {
-        None => ApiError::RuntimeError,
+        None => ApiError::RuntimeError(None),
         Some(error) => error.clone(),
     }
 }

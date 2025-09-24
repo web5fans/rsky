@@ -118,7 +118,7 @@ pub async fn upload_blob(
         Ok(res) => Ok(Json(res)),
         Err(error) => {
             tracing::error!("{error:?}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(Some(error.to_string())))
         }
     }
 }

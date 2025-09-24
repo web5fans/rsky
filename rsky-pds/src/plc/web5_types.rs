@@ -6,9 +6,11 @@ use ckb_sdk::{Address, CkbRpcAsyncClient};
 use ckb_types::{packed::Script, H256};
 use molecule::prelude::Entity;
 use rand::{distributions::Alphanumeric, Rng};
+use reqwest::StatusCode;
 use rsky_lexicon::com::atproto::web5::{IndexActionInputRef, PreIndexActionInputRef};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use tracing::info;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{collections::BTreeMap, str::FromStr};
 
@@ -282,4 +284,50 @@ pub fn generate_challenge(
         ts,
         index.statement(),
     ))
+}
+
+pub async fn get_didoc_from_indexer(did: &str) -> Result<Web5DocumentData, ApiError> {
+    let indexer_url = std::env::var("INDEXER_URL").unwrap_or("http://localhost:9533/".to_owned());
+    let query_url = format!("{indexer_url}{did}");
+    let client = reqwest::Client::new();
+
+    let response = client
+        .get(query_url)
+        .send()
+        .await
+        .map_err(|err| ApiError::IndexerRequestError(err.to_string()))?;
+    info!("{response:?}");
+    if response.status() == StatusCode::NOT_FOUND {
+        return Err(ApiError::CkbDidocCellNotFound);
+    }
+    let data = response.text().await.map_err(|err| {
+        ApiError::InvalidCkbError(format!("Indexer Response no text: {}.", err.to_string()))
+    })?;
+
+    serde_json::from_str(&data).map_err(|err| {
+        ApiError::IndexerRequestError(format!(
+            "Indexer Response text convert failed: {}",
+            err.to_string()
+        ))
+    })
+}
+
+
+pub async fn resovle_ckb_addr(ckb_addr: &str) -> Result<String, ApiError> {
+    let indexer_url = std::env::var("INDEXER_URL").unwrap_or("http://localhost:9533/".to_owned());
+    let query_url = format!("{indexer_url}resolve-ckb-addr/{ckb_addr}");
+    let client = reqwest::Client::new();
+
+    let response = client
+        .get(query_url)
+        .send()
+        .await
+        .map_err(|err| ApiError::IndexerRequestError(err.to_string()))?;
+    info!("{response:?}");
+    if response.status() == StatusCode::NOT_FOUND {
+        return Err(ApiError::CkbDidocCellNotFound);
+    }
+    response.text().await.map_err(|err| {
+        ApiError::InvalidCkbError(format!("Indexer Response no text: {}.", err.to_string()))
+    })
 }

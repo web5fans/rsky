@@ -26,7 +26,7 @@ async fn inner_confirm_email(
         Ok(res) => res,
         Err(e) => {
             tracing::error!("Error: {e}");
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(None));
         }
     };
     if let Some(user) = user {
@@ -45,7 +45,7 @@ async fn inner_confirm_email(
                 Ok(_) => {}
                 Err(e) => {
                     tracing::error!("Error: {e}");
-                    return Err(ApiError::RuntimeError);
+                    return Err(ApiError::RuntimeError(None));
                 }
             }
             Ok(())

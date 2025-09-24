@@ -206,7 +206,7 @@ pub async fn pipethrough_procedure_post<'r>(
                 }
                 Err(error) => {
                     tracing::error!("{error}");
-                    return Err(ApiError::RuntimeError);
+                    return Err(ApiError::RuntimeError(None));
                 }
             };
             match serde_json::from_str(res.as_str()) {
@@ -215,7 +215,7 @@ pub async fn pipethrough_procedure_post<'r>(
                 }
                 Err(error) => {
                     tracing::error!("{error}");
-                    return Err(ApiError::RuntimeError);
+                    return Err(ApiError::RuntimeError(None));
                 }
             }
         }

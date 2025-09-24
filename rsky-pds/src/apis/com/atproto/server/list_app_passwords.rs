@@ -24,7 +24,7 @@ pub async fn list_app_passwords(
         }
         Err(error) => {
             tracing::error!("Internal Error: {error}");
-            return Err(ApiError::RuntimeError);
+            return Err(ApiError::RuntimeError(None));
         }
     }
 }

@@ -23,7 +23,7 @@ pub async fn create_app_password(
         Ok(app_password) => Ok(Json(app_password)),
         Err(error) => {
             tracing::error!("Internal Error: {error}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
     }
 }

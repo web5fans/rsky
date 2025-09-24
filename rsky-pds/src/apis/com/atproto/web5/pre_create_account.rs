@@ -49,7 +49,7 @@ pub async fn pre_create_account(
         Ok(input) => input,
         Err(error) => {
             tracing::error!("Failed to validate inputs\n{:?}", error);
-            return Err(ApiError::RuntimeError);
+            return Err(error);
         }
     };
 
@@ -64,7 +64,7 @@ pub async fn pre_create_account(
         Err(error) => {
             tracing::error!("Failed to create repo\n{:?}", error);
             actor_store.destroy().await?;
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(Some(error.to_string())))
         }
     }
 }

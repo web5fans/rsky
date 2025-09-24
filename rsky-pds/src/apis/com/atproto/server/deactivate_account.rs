@@ -22,7 +22,7 @@ pub async fn deactivate_account(
         Ok(()) => Ok(()),
         Err(error) => {
             tracing::error!("Internal Error: {error}");
-            Err(ApiError::RuntimeError)
+            Err(ApiError::RuntimeError(None))
         }
     }
 }

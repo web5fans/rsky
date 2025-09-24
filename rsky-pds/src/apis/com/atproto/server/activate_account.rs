@@ -54,7 +54,7 @@ async fn inner_activate_account(
         Ok(())
     } else {
         tracing::error!("User not found");
-        Err(ApiError::RuntimeError)
+        Err(ApiError::RuntimeError(None))
     }
 }
 
