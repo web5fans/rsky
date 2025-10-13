@@ -82,14 +82,17 @@ async fn inner_upload_blob(
     // if !records_for_blob.is_empty() {
     actor_store
         .blob
-        .verify_blob_and_make_permanent(PreparedBlobRef {
-            cid: blobref.get_cid()?,
-            mime_type: blobref.get_mime_type().to_string(),
-            constraints: BlobConstraint {
-                max_size: None,
-                accept: None,
+        .web5_verify_blob_and_make_permanent(
+            requester,
+            PreparedBlobRef {
+                cid: blobref.get_cid()?,
+                mime_type: blobref.get_mime_type().to_string(),
+                constraints: BlobConstraint {
+                    max_size: None,
+                    accept: None,
+                },
             },
-        })
+        )
         .await?;
     // }
 
@@ -106,7 +109,7 @@ async fn inner_upload_blob(
 }
 
 #[tracing::instrument(skip_all)]
-#[rocket::post("/xrpc/com.atproto.repo.uploadBlob", data = "<blob>")]
+#[rocket::post("/xrpc/com.atproto.web5.uploadBlob", data = "<blob>")]
 pub async fn upload_blob(
     auth: AccessStandardIncludeChecks,
     blob: Data<'_>,

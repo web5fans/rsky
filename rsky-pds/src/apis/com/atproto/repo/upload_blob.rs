@@ -75,24 +75,24 @@ async fn inner_upload_blob(
     let blobref = actor_store.blob.track_untethered_blob(metadata).await?;
 
     // make the blob permanent if an associated record is already indexed
-    // let records_for_blob = actor_store
-    //     .blob
-    //     .get_records_for_blob(blobref.get_cid()?)
-    //     .await?;
-
-    // if !records_for_blob.is_empty() {
-    actor_store
+    let records_for_blob = actor_store
         .blob
-        .verify_blob_and_make_permanent(PreparedBlobRef {
-            cid: blobref.get_cid()?,
-            mime_type: blobref.get_mime_type().to_string(),
-            constraints: BlobConstraint {
-                max_size: None,
-                accept: None,
-            },
-        })
+        .get_records_for_blob(blobref.get_cid()?)
         .await?;
-    // }
+
+    if !records_for_blob.is_empty() {
+        actor_store
+            .blob
+            .verify_blob_and_make_permanent(PreparedBlobRef {
+                cid: blobref.get_cid()?,
+                mime_type: blobref.get_mime_type().to_string(),
+                constraints: BlobConstraint {
+                    max_size: None,
+                    accept: None,
+                },
+            })
+            .await?;
+    }
 
     Ok(BlobOutput {
         blob_server: std::env::var("AWS_ENDPOINT").unwrap_or("localhost".to_owned()),
@@ -108,7 +108,7 @@ async fn inner_upload_blob(
 }
 
 #[tracing::instrument(skip_all)]
-#[rocket::post("/xrpc/com.atproto.web5.uploadBlob", data = "<blob>")]
+#[rocket::post("/xrpc/com.atproto.repo.uploadBlob", data = "<blob>")]
 pub async fn upload_blob(
     auth: AccessStandardIncludeChecks,
     blob: Data<'_>,

@@ -8,7 +8,7 @@ mod common;
 
 #[tokio::test]
 async fn test_index() {
-    let postgres = common::get_postgres().await;
+    let postgres: testcontainers::ContainerAsync<testcontainers_modules::postgres::Postgres> = common::get_postgres().await;
     let client = common::get_client(&postgres).await;
     let response = client.get("/").dispatch().await;
     assert_eq!(response.status(), Status::Ok);

@@ -69,11 +69,7 @@ impl BlobReader {
         } else {
             format!("did:web5:{}", blobstore.bucket)
         };
-        BlobReader {
-            did,
-            blobstore,
-            db,
-        }
+        BlobReader { did, blobstore, db }
     }
 
     pub async fn get_blob_metadata(&self, cid: Cid) -> Result<GetBlobMetadataOutput> {
@@ -361,6 +357,49 @@ impl BlobReader {
                             .eq(blob.cid.to_string())
                             .and(BlobSchema::takedownRef.is_null()),
                     )
+                    .select(models::Blob::as_select())
+                    .first(conn)
+                    .optional()
+            })
+            .await?;
+        if let Some(found) = found {
+            verify_blob(&blob, &found).await?;
+            if let Some(ref temp_key) = found.temp_key {
+                self.blobstore
+                    .make_permanent(temp_key.clone(), blob.cid)
+                    .await?;
+            }
+            self.db
+                .run(move |conn| {
+                    update(BlobSchema::blob)
+                        .filter(BlobSchema::tempKey.eq(found.temp_key))
+                        .set(BlobSchema::tempKey.eq::<Option<String>>(None))
+                        .execute(conn)
+                })
+                .await?;
+            Ok(())
+        } else {
+            bail!("Cound not find blob: {:?}", blob.cid.to_string())
+        }
+    }
+
+    pub async fn web5_verify_blob_and_make_permanent(
+        &self,
+        did: String,
+        blob: PreparedBlobRef,
+    ) -> Result<()> {
+        use crate::schema::pds::blob::dsl as BlobSchema;
+
+        let found = self
+            .db
+            .run(move |conn| {
+                BlobSchema::blob
+                    .filter(
+                        BlobSchema::cid
+                            .eq(blob.cid.to_string())
+                            .and(BlobSchema::takedownRef.is_null()),
+                    )
+                    .filter(BlobSchema::did.eq(did))
                     .select(models::Blob::as_select())
                     .first(conn)
                     .optional()
