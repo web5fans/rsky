@@ -11,7 +11,8 @@ use rocket::request::{FromRequest, Outcome};
 use rocket::serde::json::Json;
 use rocket::{Request, State};
 use rsky_common::BadContentTypeError;
-use rsky_lexicon::com::atproto::repo::{Blob, BlobOutput};
+use rsky_lexicon::com::atproto::repo::Blob;
+use rsky_lexicon::com::atproto::web5::BlobOutput;
 use rsky_repo::types::{BlobConstraint, PreparedBlobRef};
 
 #[derive(Clone)]
@@ -73,13 +74,6 @@ async fn inner_upload_blob(
         .await?;
     let blobref = actor_store.blob.track_untethered_blob(metadata).await?;
 
-    // make the blob permanent if an associated record is already indexed
-    // let records_for_blob = actor_store
-    //     .blob
-    //     .get_records_for_blob(blobref.get_cid()?)
-    //     .await?;
-
-    // if !records_for_blob.is_empty() {
     actor_store
         .blob
         .web5_verify_blob_and_make_permanent(
@@ -94,9 +88,9 @@ async fn inner_upload_blob(
             },
         )
         .await?;
-    // }
 
     Ok(BlobOutput {
+        blob_server: std::env::var("AWS_ENDPOINT").unwrap_or("localhost".to_owned()),
         blob: Blob {
             r#type: Some("blob".to_string()),
             r#ref: Some(blobref.get_cid()?),

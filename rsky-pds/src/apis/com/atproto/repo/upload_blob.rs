@@ -11,8 +11,7 @@ use rocket::request::{FromRequest, Outcome};
 use rocket::serde::json::Json;
 use rocket::{Request, State};
 use rsky_common::BadContentTypeError;
-use rsky_lexicon::com::atproto::repo::Blob;
-use rsky_lexicon::com::atproto::web5::BlobOutput;
+use rsky_lexicon::com::atproto::repo::{Blob, BlobOutput};
 use rsky_repo::types::{BlobConstraint, PreparedBlobRef};
 
 #[derive(Clone)]
@@ -95,7 +94,6 @@ async fn inner_upload_blob(
     }
 
     Ok(BlobOutput {
-        blob_server: std::env::var("AWS_ENDPOINT").unwrap_or("localhost".to_owned()),
         blob: Blob {
             r#type: Some("blob".to_string()),
             r#ref: Some(blobref.get_cid()?),
