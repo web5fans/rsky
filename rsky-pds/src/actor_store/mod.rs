@@ -321,7 +321,6 @@ impl ActorStore {
         let commit: CommitDataWithOps = self
             .verify_commit(writes.clone(), swap_commit_cid, signing_key, root)
             .await?;
-        // }
         {
             let immutable_borrow = &self;
             // & send to indexing

@@ -67,7 +67,7 @@ impl BlobReader {
         let did = if blobstore.bucket.starts_with("did") {
             blobstore.bucket.clone()
         } else {
-            format!("did:web5:{}", blobstore.bucket)
+            format!("did:ckb:{}", blobstore.bucket)
         };
         BlobReader { did, blobstore, db }
     }

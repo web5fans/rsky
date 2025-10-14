@@ -5,7 +5,9 @@ use crate::apis::ApiError;
 use crate::auth_verifier::UserDidAuthOptional;
 use crate::config::ServerConfig;
 use crate::db::DbConn;
-use crate::handle::{normalize_and_validate_handle, HandleValidationContext, HandleValidationOpts};
+use crate::handle::{
+    check_did_str, normalize_and_validate_handle, HandleValidationContext, HandleValidationOpts,
+};
 use crate::SharedIdResolver;
 use crate::SharedSequencer;
 use aws_sdk_s3::Config;
@@ -82,6 +84,13 @@ pub async fn validate_inputs_for_local_pds(
     } else {
         input.invite_code
     };
+
+    if !check_did_str(&input.did) {
+        return Err(ApiError::InvalidDid(format!(
+            "did({}): should start with did:ckb",
+            input.did
+        )));
+    }
 
     // Normalize and Ensure Valid Handle
     let opts = HandleValidationOpts {

@@ -126,6 +126,10 @@ fn ensure_handle_service_constraints(
     Ok(())
 }
 
+pub fn check_did_str(did: &str) -> bool {
+    did.starts_with("did:ckb")
+}
+
 pub mod errors;
 pub mod explicit_slurs;
 pub mod reserved;

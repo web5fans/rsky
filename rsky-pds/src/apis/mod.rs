@@ -117,6 +117,7 @@ pub enum ApiError {
     InvalidS3Error(String),
     SigningKeyInconsistent,
     IndexerRequestError(String),
+    InvalidDid(String),
 }
 
 #[derive(Serialize)]
@@ -541,6 +542,21 @@ impl<'r, 'o: 'r> ::rocket::response::Responder<'r, 'o> for ApiError {
             ApiError::IndexerRequestError(message) => {
                 let body = Json(ErrorBody {
                     error: "IndexerRequestError".to_string(),
+                    message,
+                });
+                let mut res =
+                    <Json<ErrorBody> as ::rocket::response::Responder>::respond_to(body, __req)?;
+                res.set_header(ContentType(rocket::http::MediaType::const_new(
+                    "application",
+                    "json",
+                    &[],
+                )));
+                res.set_status(Status { code: 400u16 });
+                Ok(res)
+            }
+            ApiError::InvalidDid(message) => {
+                let body = Json(ErrorBody {
+                    error: "InvalidDid".to_string(),
                     message,
                 });
                 let mut res =

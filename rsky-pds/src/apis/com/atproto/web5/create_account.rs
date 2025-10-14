@@ -6,7 +6,8 @@ use crate::apis::ApiError;
 use crate::auth_verifier::UserDidAuthOptional;
 use crate::config::ServerConfig;
 use crate::db::DbConn;
-use crate::plc::web5_types::{generate_random_string, resovle_ckb_addr};
+use crate::handle::check_did_str;
+use crate::plc::web5_types::generate_random_string;
 use crate::sequencer::events::sync_evt_data_from_commit;
 use crate::SharedSequencer;
 use aws_sdk_s3::Config;
@@ -44,15 +45,22 @@ pub async fn create_account(
     let did = input.root.did.clone();
     let handle = input.handle.clone();
 
-    match resovle_ckb_addr(&input.ckb_addr).await {
-        Ok(_) => {
-            return Err(ApiError::InvalidCkbError(format!(
-                "Already register did, please change address."
-            )))
-        }
-        Err(ApiError::CkbDidocCellNotFound) => {}
-        Err(error) => return Err(error),
+    if !check_did_str(&did) {
+        return Err(ApiError::InvalidDid(format!(
+            "did({}): should start with did:ckb",
+            did
+        )));
     }
+
+    // match resovle_ckb_addr(&input.ckb_addr).await {
+    //     Ok(_) => {
+    //         return Err(ApiError::InvalidCkbError(format!(
+    //             "Already register did, please change address."
+    //         )))
+    //     }
+    //     Err(ApiError::CkbDidocCellNotFound) => {}
+    //     Err(error) => return Err(error),
+    // }
 
     // Create new actor repo TODO: Proper rollback
     let mut actor_store = ActorStore::new(
