@@ -75,8 +75,8 @@ impl ActorStore {
             ))),
             record: RecordReader::new(did.clone(), db.clone()),
             pref: PreferenceReader::new(did.clone(), db.clone()),
-            did,
-            blob: BlobReader::new(blobstore, db.clone()), // Unlike TS impl, just use blob reader vs generator
+            did: did.clone(),
+            blob: BlobReader::new(did, blobstore, db.clone()), // Unlike TS impl, just use blob reader vs generator
         }
     }
 

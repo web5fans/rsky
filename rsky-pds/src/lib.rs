@@ -8,6 +8,7 @@ use crate::sequencer::Sequencer;
 use atrium_xrpc_client::reqwest::ReqwestClient;
 use event_emitter_rs::EventEmitter;
 use lazy_static::lazy_static;
+use rocket::http::uri::Host;
 pub mod account_manager;
 pub mod actor_store;
 pub mod apis;
@@ -81,7 +82,7 @@ use rocket::figment::{
 };
 use rocket::http::Header;
 use rocket::http::Status;
-use rocket::response::status;
+use rocket::response::{status, Redirect};
 use rocket::serde::json::Json;
 use rocket::shield::{NoSniff, Shield};
 use rocket::{Request, Response};
@@ -188,6 +189,17 @@ impl Fairing for CORS {
         response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
         response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
     }
+}
+
+#[get("/handle-redirect")]
+async fn handle_redirect<'r>(host: &Host<'r>) -> status::Custom<Redirect>  {
+    let domain = host.domain();
+    tracing::info!("handle_redirect: {domain}");
+    let user_profile_url = env::var("USER_PROFILE_URL").unwrap_or("https://bbs.fans/profile".into());
+    status::Custom(
+        Status::TemporaryRedirect,
+        Redirect::to(format!("{user_profile_url}/{domain}")),
+    )
 }
 
 pub struct RocketConfig {
@@ -385,6 +397,7 @@ pub async fn build_rocket(cfg: Option<RocketConfig>) -> Rocket<Build> {
                 bsky_api_get_forwarder,
                 bsky_api_post_forwarder,
                 well_known::well_known,
+                handle_redirect,
                 all_options
             ],
         )

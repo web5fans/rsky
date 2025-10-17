@@ -26,8 +26,16 @@ pub struct S3BlobStore {
 impl S3BlobStore {
     pub fn new(did: String, cfg: Config) -> Self {
         let client = aws_sdk_s3::Client::from_conf(cfg);
-        let bucket = if did.starts_with("did:ckb") {
-            did[8..].to_string()
+        let bucket = if did.len() > 32 {
+            if let Some(last) = did.split(":").last() {
+                if last.len() > 32 {
+                    last[last.len() - 32..].to_string()
+                } else {
+                    last.to_string()
+                }
+            } else {
+                did[did.len() - 32..].to_string()
+            }
         } else {
             did
         };

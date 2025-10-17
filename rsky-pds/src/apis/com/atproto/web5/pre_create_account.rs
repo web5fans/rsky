@@ -85,9 +85,10 @@ pub async fn validate_inputs_for_local_pds(
         input.invite_code
     };
 
+    let did_prefix = std::env::var("DID_PREFIX").unwrap_or("did:ckb".into());
     if !check_did_str(&input.did) {
         return Err(ApiError::InvalidDid(format!(
-            "did({}): should start with did:ckb",
+            "did({}): should start with {did_prefix}",
             input.did
         )));
     }

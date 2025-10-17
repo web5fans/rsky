@@ -127,7 +127,8 @@ fn ensure_handle_service_constraints(
 }
 
 pub fn check_did_str(did: &str) -> bool {
-    did.starts_with("did:ckb")
+    let did_prefix = std::env::var("DID_PREFIX").unwrap_or("did:ckb".into());
+    did.starts_with(&did_prefix)
 }
 
 pub mod errors;

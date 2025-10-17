@@ -45,10 +45,10 @@ pub async fn create_account(
     let did = input.root.did.clone();
     let handle = input.handle.clone();
 
+    let did_prefix = std::env::var("DID_PREFIX").unwrap_or("did:ckb".into());
     if !check_did_str(&did) {
         return Err(ApiError::InvalidDid(format!(
-            "did({}): should start with did:ckb",
-            did
+            "did({did}): should start with {did_prefix}",
         )));
     }
 
