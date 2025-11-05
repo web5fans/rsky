@@ -12,7 +12,7 @@ use rocket::serde::json::Json;
 use rocket::{Request, State};
 use rsky_common::BadContentTypeError;
 use rsky_lexicon::com::atproto::repo::Blob;
-use rsky_lexicon::com::atproto::web5::BlobOutput;
+use rsky_lexicon::fans::web5::ckb::BlobOutput;
 use rsky_repo::types::{BlobConstraint, PreparedBlobRef};
 
 #[derive(Clone)]
@@ -103,7 +103,7 @@ async fn inner_upload_blob(
 }
 
 #[tracing::instrument(skip_all)]
-#[rocket::post("/xrpc/com.atproto.web5.uploadBlob", data = "<blob>")]
+#[rocket::post("/xrpc/fans.web5.ckb.uploadBlob", data = "<blob>")]
 pub async fn upload_blob(
     auth: AccessStandardIncludeChecks,
     blob: Data<'_>,

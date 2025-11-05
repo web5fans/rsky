@@ -15,7 +15,7 @@ use futures::stream::{self, StreamExt};
 use lexicon_cid::Cid;
 use rocket::serde::json::Json;
 use rocket::State;
-use rsky_lexicon::com::atproto::web5::{
+use rsky_lexicon::fans::web5::ckb::{
     PreDirectWritesInput, PreDirectWritesInputRefWrite, PreDirectWritesOutput,
 };
 use rsky_repo::types::PreparedWrite;
@@ -154,7 +154,7 @@ async fn inner_pre_writes(
 
 #[tracing::instrument(skip_all)]
 #[rocket::post(
-    "/xrpc/com.atproto.web5.preDirectWrites",
+    "/xrpc/fans.web5.ckb.preDirectWrites",
     format = "json",
     data = "<body>"
 )]

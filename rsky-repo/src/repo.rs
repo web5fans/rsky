@@ -14,7 +14,7 @@ use lexicon_cid::Cid;
 use rsky_common;
 use rsky_common::ipld::cid_for_cbor;
 use rsky_common::tid::{Ticker, TID};
-use rsky_lexicon::com::atproto::web5::SignedRoot;
+use rsky_lexicon::fans::web5::ckb::SignedRoot;
 use secp256k1::Keypair;
 use serde_cbor::Value as CborValue;
 use std::collections::BTreeMap;

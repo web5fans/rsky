@@ -7,12 +7,12 @@ use ckb_types::{packed::Script, H256};
 use molecule::prelude::Entity;
 use rand::{distributions::Alphanumeric, Rng};
 use reqwest::StatusCode;
-use rsky_lexicon::com::atproto::web5::{IndexActionInputRef, PreIndexActionInputRef};
+use rsky_lexicon::fans::web5::ckb::{IndexActionInputRef, PreIndexActionInputRef};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tracing::info;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{collections::BTreeMap, str::FromStr};
+use tracing::info;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Service {
@@ -312,8 +312,7 @@ pub async fn get_didoc_from_indexer(did: &str) -> Result<Web5DocumentData, ApiEr
     })
 }
 
-
-pub async fn resovle_ckb_addr(ckb_addr: &str) -> Result<String, ApiError> {
+pub async fn resolve_ckb_addr(ckb_addr: &str) -> Result<Vec<String>, ApiError> {
     let indexer_url = std::env::var("INDEXER_URL").unwrap_or("http://localhost:9533/".to_owned());
     let query_url = format!("{indexer_url}resolve-ckb-addr/{ckb_addr}");
     let client = reqwest::Client::new();
@@ -327,7 +326,26 @@ pub async fn resovle_ckb_addr(ckb_addr: &str) -> Result<String, ApiError> {
     if response.status() == StatusCode::NOT_FOUND {
         return Err(ApiError::CkbDidocCellNotFound);
     }
-    response.text().await.map_err(|err| {
+    response.json().await.map_err(|err| {
         ApiError::InvalidCkbError(format!("Indexer Response no text: {}.", err.to_string()))
     })
+}
+
+pub fn check_ckb_address(ckb_addr: &str) -> Result<(), ApiError> {
+    match Address::from_str(ckb_addr) {
+        Ok(address) => {
+            let ckb_net = std::env::var("CKB_NETWORK").unwrap_or("ckb".into());
+            if address.network().to_str() == &ckb_net {
+                Ok(())
+            } else {
+                Err(ApiError::InvalidCkbError(format!(
+                    "ckb network not matching: pds except: {ckb_net}, user input: {}",
+                    address.network()
+                )))
+            }
+        }
+        Err(e) => Err(ApiError::InvalidCkbError(format!(
+            "parse ckb address failed: {e}"
+        ))),
+    }
 }

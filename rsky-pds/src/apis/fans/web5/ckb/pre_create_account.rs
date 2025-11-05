@@ -13,7 +13,7 @@ use crate::SharedSequencer;
 use aws_sdk_s3::Config;
 use rocket::serde::json::Json;
 use rocket::State;
-use rsky_lexicon::com::atproto::web5::{PreCreateAccountInput, PreCreateAccountOutput};
+use rsky_lexicon::fans::web5::ckb::{PreCreateAccountInput, PreCreateAccountOutput};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct TransformedWeb5CreateAccountInput {
@@ -25,7 +25,7 @@ pub struct TransformedWeb5CreateAccountInput {
 //TODO: Potential for taking advantage of async better
 #[tracing::instrument(skip_all)]
 #[rocket::post(
-    "/xrpc/com.atproto.web5.preCreateAccount",
+    "/xrpc/fans.web5.ckb.preCreateAccount",
     format = "json",
     data = "<body>"
 )]

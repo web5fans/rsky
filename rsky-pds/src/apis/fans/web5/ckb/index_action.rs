@@ -12,7 +12,7 @@ use crate::{sequencer, SharedSequencer};
 use aws_sdk_s3::Config;
 use rocket::serde::json::Json;
 use rocket::State;
-use rsky_lexicon::com::atproto::web5::{
+use rsky_lexicon::fans::web5::ckb::{
     IndexActionInput, IndexActionInputRef, IndexActionOutput, IndexActionOutputRefResult,
     RefCreateSessionResult, RefDeleteAccountResult,
 };
@@ -149,7 +149,7 @@ async fn inner_index_action(
     }
 }
 
-#[rocket::post("/xrpc/com.atproto.web5.indexAction", format = "json", data = "<body>")]
+#[rocket::post("/xrpc/fans.web5.ckb.indexAction", format = "json", data = "<body>")]
 pub async fn index_action(
     body: Json<IndexActionInput>,
     account_manager: AccountManager,

@@ -3,7 +3,7 @@ use crate::apis::ApiError;
 use crate::auth_verifier::UserDidAuthOptional;
 use crate::db::DbConn;
 use rocket::serde::json::Json;
-use rsky_lexicon::com::atproto::web5::{
+use rsky_lexicon::fans::web5::ckb::{
     FirstResult, FourthResult, IndexQueryInput, IndexQueryInputRef, IndexQueryOutput, IndexQueryOutputRef, SecondResult, ThirdResult
 };
 
@@ -16,7 +16,7 @@ pub struct TransformedWeb5CreateAccountInput {
 
 //TODO: Potential for taking advantage of async better
 #[tracing::instrument(skip_all)]
-#[rocket::post("/xrpc/com.atproto.web5.indexQuery", format = "json", data = "<body>")]
+#[rocket::post("/xrpc/fans.web5.ckb.indexQuery", format = "json", data = "<body>")]
 pub async fn index_query(
     body: Json<IndexQueryInput>,
     _auth: UserDidAuthOptional,

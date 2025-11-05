@@ -48,7 +48,7 @@ pub struct CreateAccountOutput {
 /// Pre apply writes output
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-#[serde(rename = "com.atproto.web5.createAccount#signedRoot")]
+#[serde(rename = "fans.web5.ckb.createAccount#signedRoot")]
 pub struct SignedRoot {
     pub did: String,
     pub rev: String,
@@ -97,22 +97,22 @@ pub struct DirectWritesInput {
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(tag = "$type")]
 pub enum PreDirectWritesInputRefWrite {
-    #[serde(rename = "com.atproto.web5.preDirectWrites#create")]
+    #[serde(rename = "fans.web5.ckb.preDirectWrites#create")]
     Create(RefWriteCreate),
-    #[serde(rename = "com.atproto.web5.preDirectWrites#update")]
+    #[serde(rename = "fans.web5.ckb.preDirectWrites#update")]
     Update(RefWriteUpdate),
-    #[serde(rename = "com.atproto.web5.preDirectWrites#delete")]
+    #[serde(rename = "fans.web5.ckb.preDirectWrites#delete")]
     Delete(RefWriteDelete),
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(tag = "$type")]
 pub enum DirectWritesInputRefWrite {
-    #[serde(rename = "com.atproto.web5.directWrites#create")]
+    #[serde(rename = "fans.web5.ckb.directWrites#create")]
     Create(RefWriteCreate),
-    #[serde(rename = "com.atproto.web5.directWrites#update")]
+    #[serde(rename = "fans.web5.ckb.directWrites#update")]
     Update(RefWriteUpdate),
-    #[serde(rename = "com.atproto.web5.directWrites#delete")]
+    #[serde(rename = "fans.web5.ckb.directWrites#delete")]
     Delete(RefWriteDelete),
 }
 
@@ -165,9 +165,9 @@ pub struct PreIndexActionInput {
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(tag = "$type")]
 pub enum PreIndexActionInputRef {
-    #[serde(rename = "com.atproto.web5.preIndexAction#createSession")]
+    #[serde(rename = "fans.web5.ckb.preIndexAction#createSession")]
     CreateSessionIndex(RefCreateSessionIndex),
-    #[serde(rename = "com.atproto.web5.preIndexAction#deleteAccount")]
+    #[serde(rename = "fans.web5.ckb.preIndexAction#deleteAccount")]
     DeleteAccountIndex(RefDeleteAccountIndex),
 }
 
@@ -216,21 +216,21 @@ pub struct IndexActionInput {
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(tag = "$type")]
 pub enum IndexActionInputRef {
-    #[serde(rename = "com.atproto.web5.indexAction#createSession")]
+    #[serde(rename = "fans.web5.ckb.indexAction#createSession")]
     CreateSessionIndex(RefCreateSessionIndex),
-    #[serde(rename = "com.atproto.web5.indexAction#deleteAccount")]
+    #[serde(rename = "fans.web5.ckb.indexAction#deleteAccount")]
     DeleteAccountIndex(RefDeleteAccountIndex),
 }
 
 impl IndexActionInputRef {
     pub fn statement(&self) -> String {
+        let domain = std::env::var("PDS_HOSTNAME").unwrap_or("web5.bbs.fans".into());
         match self {
             IndexActionInputRef::CreateSessionIndex(_) => {
-                "Sign this message to authenticate with login on pds: web5.bbs.fans.".to_string()
+                format!("Sign this message to authenticate with login on pds: {domain}.")
             }
             IndexActionInputRef::DeleteAccountIndex(_) => {
-                "Sign this message to authenticate with delete account on pds: web5.bbs.fans."
-                    .to_string()
+                format!("Sign this message to authenticate with delete account on pds: {domain}.")
             }
         }
     }
@@ -244,9 +244,9 @@ pub struct IndexActionOutput {
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(tag = "$type")]
 pub enum IndexActionOutputRefResult {
-    #[serde(rename = "com.atproto.web5.indexAction#createSessionResult")]
+    #[serde(rename = "fans.web5.ckb.indexAction#createSessionResult")]
     CreateSessionResult(RefCreateSessionResult),
-    #[serde(rename = "com.atproto.web5.indexAction#deleteAccountResult")]
+    #[serde(rename = "fans.web5.ckb.indexAction#deleteAccountResult")]
     DeleteAccountResult(RefDeleteAccountResult),
 }
 
@@ -278,11 +278,11 @@ pub struct DirectWritesOutput {
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(tag = "$type")]
 pub enum DirectWritesOutputRefWrite {
-    #[serde(rename = "com.atproto.web5.directWrites#createResult")]
+    #[serde(rename = "fans.web5.ckb.directWrites#createResult")]
     Create(RefWriteCreateResult),
-    #[serde(rename = "com.atproto.web5.directWrites#updateResult")]
+    #[serde(rename = "fans.web5.ckb.directWrites#updateResult")]
     Update(RefWriteUpdateResult),
-    #[serde(rename = "com.atproto.web5.directWrites#deleteResult")]
+    #[serde(rename = "fans.web5.ckb.directWrites#deleteResult")]
     Delete(RefWriteDeleteResult),
 }
 
@@ -334,13 +334,13 @@ pub struct IndexQueryInput {
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(tag = "$type")]
 pub enum IndexQueryInputRef {
-    #[serde(rename = "com.atproto.web5.indexQuery#firstItem")]
+    #[serde(rename = "fans.web5.ckb.indexQuery#firstItem")]
     First(FirstIndex),
-    #[serde(rename = "com.atproto.web5.indexQuery#secondItem")]
+    #[serde(rename = "fans.web5.ckb.indexQuery#secondItem")]
     Second(SecondIndex),
-    #[serde(rename = "com.atproto.web5.indexQuery#thirdItem")]
+    #[serde(rename = "fans.web5.ckb.indexQuery#thirdItem")]
     Third(ThirdIndex),
-    #[serde(rename = "com.atproto.web5.indexQuery#fourthItem")]
+    #[serde(rename = "fans.web5.ckb.indexQuery#fourthItem")]
     Fourth(FourthIndex),
 }
 
@@ -370,13 +370,13 @@ pub struct IndexQueryOutput {
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(tag = "$type")]
 pub enum IndexQueryOutputRef {
-    #[serde(rename = "com.atproto.web5.indexQuery#firstItemResult")]
+    #[serde(rename = "fans.web5.ckb.indexQuery#firstItemResult")]
     First(FirstResult),
-    #[serde(rename = "com.atproto.web5.indexQuery#secondItemResult")]
+    #[serde(rename = "fans.web5.ckb.indexQuery#secondItemResult")]
     Second(SecondResult),
-    #[serde(rename = "com.atproto.web5.indexQuery#thirdItemResult")]
+    #[serde(rename = "fans.web5.ckb.indexQuery#thirdItemResult")]
     Third(ThirdResult),
-    #[serde(rename = "com.atproto.web5.indexQuery#fourthItemResult")]
+    #[serde(rename = "fans.web5.ckb.indexQuery#fourthItemResult")]
     Fourth(FourthResult),
 }
 

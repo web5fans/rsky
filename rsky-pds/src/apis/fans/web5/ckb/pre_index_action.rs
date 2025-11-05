@@ -1,7 +1,7 @@
 use crate::apis::ApiError;
 use crate::plc::web5_types::{generate_challenge, get_didoc_from_indexer};
 use rocket::serde::json::Json;
-use rsky_lexicon::com::atproto::web5::{
+use rsky_lexicon::fans::web5::ckb::{
     PreIndexActionInput, PreIndexActionInputRef, PreIndexActionOutput, RefDeleteAccountIndex,
 };
 
@@ -42,7 +42,7 @@ async fn inner_pre_index_action(
 }
 
 #[rocket::post(
-    "/xrpc/com.atproto.web5.preIndexAction",
+    "/xrpc/fans.web5.ckb.preIndexAction",
     format = "json",
     data = "<body>"
 )]

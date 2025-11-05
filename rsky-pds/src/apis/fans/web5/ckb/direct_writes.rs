@@ -17,7 +17,7 @@ use futures::stream::{self, StreamExt};
 use lexicon_cid::Cid;
 use rocket::serde::json::Json;
 use rocket::State;
-use rsky_lexicon::com::atproto::web5::{
+use rsky_lexicon::fans::web5::ckb::{
     CommitMeta, DirectWritesInput, DirectWritesInputRefWrite, DirectWritesOutput,
     DirectWritesOutputRefWrite, RefWriteCreateResult, RefWriteDeleteResult, RefWriteUpdateResult,
 };
@@ -193,11 +193,7 @@ async fn inner_direct_writes(
 }
 
 #[tracing::instrument(skip_all)]
-#[rocket::post(
-    "/xrpc/com.atproto.web5.directWrites",
-    format = "json",
-    data = "<body>"
-)]
+#[rocket::post("/xrpc/fans.web5.ckb.directWrites", format = "json", data = "<body>")]
 pub async fn direct_writes(
     body: Json<DirectWritesInput>,
     auth: AccessStandardIncludeChecks,

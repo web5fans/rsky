@@ -3,6 +3,7 @@
 use dotenvy::dotenv;
 use futures::StreamExt as _;
 use lexicon_cid::Cid;
+use rsky_lexicon::app::bbs;
 use rsky_lexicon::app::bsky::feed::like::Like;
 use rsky_lexicon::app::bsky::feed::Post;
 use rsky_lexicon::app::bsky::graph::follow::Follow;
@@ -29,6 +30,10 @@ enum Lexicon {
     AppBskyFeedLike(Like),
     #[serde(rename(deserialize = "app.bsky.graph.follow"))]
     AppBskyFeedFollow(Follow),
+    #[serde(rename(deserialize = "app.bbs.post"))]
+    AppBbsPost(bbs::Post),
+    #[serde(rename(deserialize = "app.bbs.reply"))]
+    AppBbsReply(bbs::Reply),
 }
 
 async fn queue_delete(
@@ -132,7 +137,9 @@ async fn process(message: Vec<u8>, client: &reqwest::Client) {
                         .filter(|operation|
                         operation.path.starts_with("app.bsky.feed.post/") ||
                             operation.path.starts_with("app.bsky.feed.like/") ||
-                            operation.path.starts_with("app.bsky.graph.follow/"))
+                            operation.path.starts_with("app.bsky.graph.follow/") ||
+                            operation.path.starts_with("app.bbs.post/") ||
+                            operation.path.starts_with("app.bbs.reply/"))
                         .map(|operation| {
                             let uri = format!("at://{}/{}",commit.repo,operation.path);
                             match operation.action.as_str() {
@@ -190,6 +197,21 @@ async fn process(message: Vec<u8>, client: &reqwest::Client) {
                                                 }
                                                 follows_to_create.push(create);
                                             },
+                                            Ok(Lexicon::AppBbsPost(r)) => {
+                                                let mut create = rsky_firehose::models::CreateOp {
+                                                    uri: uri.to_owned(),
+                                                    cid: cid.to_string(),
+                                                    sequence: commit.seq,
+                                                    prev: None,
+                                                    author: commit.repo.to_owned(),
+                                                    record: r
+                                                };
+                                                if let Some(ref prev) = commit.prev {
+                                                    create.prev = Some(prev.to_string());
+                                                }
+                                                posts_to_create.push(create);
+                                            }
+                                            Ok(Lexicon::AppBbsReply(r)) => {}
                                             Err(error) => {
                                                 eprintln!("@LOG: Failed to deserialize record: {:?}. Received error {:?}. Sequence {:?}", uri, error, commit.seq);
                                             }
@@ -210,6 +232,8 @@ async fn process(message: Vec<u8>, client: &reqwest::Client) {
                                         likes_to_delete.push(del);
                                     } else if collection == "app.bsky.graph.follow" {
                                         follows_to_delete.push(del);
+                                    } else if collection == "app.bbs.post" {
+                                        posts_to_delete.push(del);
                                     }
                                 },
                                 _ => {}

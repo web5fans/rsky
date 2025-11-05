@@ -7,13 +7,13 @@ use crate::auth_verifier::UserDidAuthOptional;
 use crate::config::ServerConfig;
 use crate::db::DbConn;
 use crate::handle::check_did_str;
-use crate::plc::web5_types::generate_random_string;
+use crate::plc::web5_types::{check_ckb_address, generate_random_string, resolve_ckb_addr};
 use crate::sequencer::events::sync_evt_data_from_commit;
 use crate::SharedSequencer;
 use aws_sdk_s3::Config;
 use rocket::serde::json::Json;
 use rocket::State;
-use rsky_lexicon::com::atproto::web5::{CreateAccountInput, CreateAccountOutput};
+use rsky_lexicon::fans::web5::ckb::{CreateAccountInput, CreateAccountOutput};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct TransformedWeb5CreateAccountInput {
@@ -25,11 +25,7 @@ pub struct TransformedWeb5CreateAccountInput {
 
 //TODO: Potential for taking advantage of async better
 #[tracing::instrument(skip_all)]
-#[rocket::post(
-    "/xrpc/com.atproto.web5.createAccount",
-    format = "json",
-    data = "<body>"
-)]
+#[rocket::post("/xrpc/fans.web5.ckb.createAccount", format = "json", data = "<body>")]
 pub async fn create_account(
     body: Json<CreateAccountInput>,
     _auth: UserDidAuthOptional,
@@ -52,15 +48,19 @@ pub async fn create_account(
         )));
     }
 
-    // match resovle_ckb_addr(&input.ckb_addr).await {
-    //     Ok(_) => {
-    //         return Err(ApiError::InvalidCkbError(format!(
-    //             "Already register did, please change address."
-    //         )))
-    //     }
-    //     Err(ApiError::CkbDidocCellNotFound) => {}
-    //     Err(error) => return Err(error),
-    // }
+    check_ckb_address(&input.ckb_addr)?;
+
+    match resolve_ckb_addr(&input.ckb_addr).await {
+        Ok(res) => {
+            if res.len() != 0 {
+                return Err(ApiError::InvalidCkbError(format!(
+                    "Already register did, please change address."
+                )));
+            }
+        }
+        Err(ApiError::CkbDidocCellNotFound) => {}
+        Err(error) => return Err(error),
+    }
 
     // Create new actor repo TODO: Proper rollback
     let mut actor_store = ActorStore::new(

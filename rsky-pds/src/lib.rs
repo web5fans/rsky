@@ -6,6 +6,7 @@ extern crate serde;
 use crate::read_after_write::viewer::{LocalViewer, LocalViewerCreator, LocalViewerCreatorParams};
 use crate::sequencer::Sequencer;
 use atrium_xrpc_client::reqwest::ReqwestClient;
+use ckb_sdk::NetworkType;
 use event_emitter_rs::EventEmitter;
 use lazy_static::lazy_static;
 use rocket::http::uri::Host;
@@ -69,7 +70,7 @@ lazy_static! {
 }
 
 extern crate rocket;
-use crate::apis::{app, bsky_api_get_forwarder, bsky_api_post_forwarder, com, ApiError};
+use crate::apis::{app, bsky_api_get_forwarder, bsky_api_post_forwarder, com, fans, ApiError};
 use atrium_api::client::AtpServiceClient;
 use atrium_xrpc_client::reqwest::ReqwestClientBuilder;
 use diesel::sql_types::Int4;
@@ -192,10 +193,11 @@ impl Fairing for CORS {
 }
 
 #[get("/handle-redirect")]
-async fn handle_redirect<'r>(host: &Host<'r>) -> status::Custom<Redirect>  {
+async fn handle_redirect<'r>(host: &Host<'r>) -> status::Custom<Redirect> {
     let domain = host.domain();
     tracing::info!("handle_redirect: {domain}");
-    let user_profile_url = env::var("USER_PROFILE_URL").unwrap_or("https://bbs.fans/profile".into());
+    let user_profile_url =
+        env::var("USER_PROFILE_URL").unwrap_or("https://bbs.fans/profile".into());
     status::Custom(
         Status::TemporaryRedirect,
         Redirect::to(format!("{user_profile_url}/{domain}")),
@@ -208,6 +210,9 @@ pub struct RocketConfig {
 
 pub async fn build_rocket(cfg: Option<RocketConfig>) -> Rocket<Build> {
     dotenv().ok();
+
+    let ckb_net = std::env::var("CKB_NETWORK").unwrap_or("ckb".into());
+    NetworkType::from_raw_str(&ckb_net).expect("CKB_NETWORK should be set ckb or ckb_testnet");
 
     let db_url = if let Some(cfg) = cfg {
         cfg.db_url
@@ -376,14 +381,14 @@ pub async fn build_rocket(cfg: Option<RocketConfig>) -> Rocket<Build> {
                 com::atproto::sync::list_blobs::list_blobs,
                 com::atproto::sync::list_repos::list_repos,
                 com::atproto::sync::subscribe_repos::subscribe_repos,
-                com::atproto::web5::pre_direct_writes::pre_direct_writes,
-                com::atproto::web5::direct_writes::direct_writes,
-                com::atproto::web5::pre_create_account::pre_create_account,
-                com::atproto::web5::create_account::create_account,
-                com::atproto::web5::index_action::index_action,
-                com::atproto::web5::index_query::index_query,
-                com::atproto::web5::pre_index_action::pre_index_action,
-                com::atproto::web5::upload_blob::upload_blob,
+                fans::web5::ckb::pre_direct_writes::pre_direct_writes,
+                fans::web5::ckb::direct_writes::direct_writes,
+                fans::web5::ckb::pre_create_account::pre_create_account,
+                fans::web5::ckb::create_account::create_account,
+                fans::web5::ckb::index_action::index_action,
+                fans::web5::ckb::index_query::index_query,
+                fans::web5::ckb::pre_index_action::pre_index_action,
+                fans::web5::ckb::upload_blob::upload_blob,
                 app::bsky::actor::get_preferences::get_preferences,
                 app::bsky::actor::get_profile::get_profile,
                 app::bsky::actor::get_profiles::get_profiles,

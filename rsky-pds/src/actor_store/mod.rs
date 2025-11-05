@@ -13,7 +13,7 @@ use diesel::*;
 use futures::stream::{self, StreamExt};
 use lexicon_cid::Cid;
 use rsky_common;
-use rsky_lexicon::com::atproto::web5::{PreCreateAccountOutput, SignedRoot};
+use rsky_lexicon::fans::web5::ckb::{PreCreateAccountOutput, SignedRoot};
 use rsky_repo::repo::Repo;
 use rsky_repo::storage::readable_blockstore::ReadableBlockstore;
 use rsky_repo::storage::types::RepoStorage;
@@ -329,7 +329,8 @@ impl ActorStore {
                 .await?;
         }
         // persist the commit to repo storage
-        let storage_guard: tokio::sync::RwLockReadGuard<'_, SqlRepoReader> = self.storage.read().await;
+        let storage_guard: tokio::sync::RwLockReadGuard<'_, SqlRepoReader> =
+            self.storage.read().await;
         storage_guard
             .apply_commit(commit.commit_data.clone(), None)
             .await?;
@@ -387,9 +388,6 @@ impl ActorStore {
                         delete_and_update_uris.push(d_at_uri)
                     }
                 }
-                if write.swap_cid().is_none() {
-                    continue;
-                }
                 let write_at_uri: &AtUri = &write.uri().try_into()?;
                 let record = self
                     .record
@@ -413,6 +411,9 @@ impl ActorStore {
                     op.prev = current_record;
                 };
                 commit_ops.push(op);
+                if write.swap_cid().is_none() {
+                    continue;
+                }
                 match write {
                     // There should be no current record for a create
                     PreparedWrite::Create(_) if write.swap_cid().is_some() => {
@@ -533,9 +534,6 @@ impl ActorStore {
                         delete_and_update_uris.push(d_at_uri)
                     }
                 }
-                if write.swap_cid().is_none() {
-                    continue;
-                }
                 let write_at_uri: &AtUri = &write.uri().try_into()?;
                 let record = self
                     .record
@@ -559,6 +557,9 @@ impl ActorStore {
                     op.prev = current_record;
                 };
                 commit_ops.push(op);
+                if write.swap_cid().is_none() {
+                    continue;
+                }
                 match write {
                     // There should be no current record for a create
                     PreparedWrite::Create(_) if write.swap_cid().is_some() => {
