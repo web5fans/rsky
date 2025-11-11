@@ -173,13 +173,13 @@ pub enum PreIndexActionInputRef {
 
 impl PreIndexActionInputRef {
     pub fn statement(&self) -> String {
+        let domain = std::env::var("PDS_HOSTNAME").unwrap_or("web5.bbs.fans".into());
         match self {
             PreIndexActionInputRef::CreateSessionIndex(_) => {
-                "Sign this message to authenticate with login on pds: web5.bbs.fans.".to_string()
+                format!("Sign this message to authenticate with login on pds: {domain}.")
             }
             PreIndexActionInputRef::DeleteAccountIndex(_) => {
-                "Sign this message to authenticate with delete account on pds: web5.bbs.fans."
-                    .to_string()
+                format!("Sign this message to authenticate with delete account on pds: {domain}.")
             }
         }
     }
