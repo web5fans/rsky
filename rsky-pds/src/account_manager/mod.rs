@@ -327,7 +327,7 @@ impl AccountManager {
                 auth::add_refresh_grace_period(
                     RefreshGracePeriodOpts {
                         id: id.clone(),
-                        expires_at: from_micros_to_str(expires_at),
+                        expires_at: from_micros_to_str(expires_at / 1000000),
                         next_id
                     },
                     self.db.as_ref()
