@@ -304,12 +304,35 @@ pub async fn get_didoc_from_indexer(did: &str) -> Result<Web5DocumentData, ApiEr
         ApiError::InvalidCkbError(format!("Indexer Response no text: {}.", err.to_string()))
     })?;
 
-    serde_json::from_str(&data).map_err(|err| {
+    let mut didoc: Web5DocumentData = serde_json::from_str(&data).map_err(|err| {
         ApiError::IndexerRequestError(format!(
             "Indexer Response text convert failed: {}",
             err.to_string()
         ))
-    })
+    })?;
+
+    if didoc.also_known_as.len() == 0 {
+        return Err(ApiError::IncompatibleDidDoc);
+    }
+
+    let free_lu = vec![
+        "at://JLer.web5.bbs.fans",
+        "at://Retric.web5.bbs.fans",
+        "at://ChickenDrumstick.web5.bbs.fans",
+        "at://Sensen.web5.bbs.fans",
+        "at://Guangzhou.web5.bbs.fans",
+        "at://Shenzhen.web5.bbs.fans",
+        "at://Chongqing.web5.bbs.fans",
+        "at://Hangzhou.web5.bbs.fans",
+        "at://LouisCK.web5.bbs.fans",
+        "at://Thinker.web5.bbs.fans",
+    ];
+
+    if free_lu.contains(&didoc.also_known_as[0].as_str()) {
+        didoc.also_known_as[0] = didoc.also_known_as[0].to_lowercase();
+    }
+
+    Ok(didoc)
 }
 
 pub async fn resolve_ckb_addr(ckb_addr: &str) -> Result<Vec<String>, ApiError> {

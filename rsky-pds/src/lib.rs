@@ -87,7 +87,7 @@ use rocket::response::{status, Redirect};
 use rocket::serde::json::Json;
 use rocket::shield::{NoSniff, Shield};
 use rocket::{Request, Response};
-use rsky_common::env::env_list;
+use rsky_common::env::{env_bool, env_list};
 use rsky_identity::types::{DidCache, IdentityResolverOpts};
 use rsky_identity::IdResolver;
 use std::env;
@@ -245,17 +245,17 @@ pub async fn build_rocket(cfg: Option<RocketConfig>) -> Rocket<Build> {
         env::var("AWS_SECRET_ACCESS_KEY").unwrap_or("test".to_owned()), // Secret Access Key
         None,                                                       // Session Token
         None,                                                       // Expires
-        "localstack",
+        "aliyun-oss",
     );
 
     let aws_config = aws_sdk_s3::config::Builder::new()
-        .endpoint_url(env::var("AWS_ENDPOINT").unwrap_or("localhost".to_owned()))
+        .endpoint_url(env::var("AWS_ENDPOINT").unwrap_or("http://localhost".to_owned()))
         .region(aws_config::Region::new(
             env::var("AWS_DEFAULT_REGION").unwrap_or("us-east-1".to_owned()),
         ))
         .credentials_provider(credentials)
         .behavior_version_latest()
-        .force_path_style(true)
+        .force_path_style(env_bool("FORCE_PATH_STYLE").unwrap_or(false))
         .build();
 
     let id_resolver = SharedIdResolver {

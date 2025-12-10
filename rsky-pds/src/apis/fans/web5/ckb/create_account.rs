@@ -6,10 +6,10 @@ use crate::apis::ApiError;
 use crate::auth_verifier::UserDidAuthOptional;
 use crate::config::ServerConfig;
 use crate::db::DbConn;
-use crate::handle::check_did_str;
+use crate::handle::{HandleValidationContext, HandleValidationOpts, check_did_str, normalize_and_validate_handle};
 use crate::plc::web5_types::{check_ckb_address, generate_random_string, resolve_ckb_addr};
 use crate::sequencer::events::sync_evt_data_from_commit;
-use crate::SharedSequencer;
+use crate::{SharedIdResolver, SharedSequencer};
 use aws_sdk_s3::Config;
 use rocket::serde::json::Json;
 use rocket::State;
@@ -30,8 +30,9 @@ pub async fn create_account(
     body: Json<CreateAccountInput>,
     _auth: UserDidAuthOptional,
     sequencer: &State<SharedSequencer>,
+    id_resolver: &State<SharedIdResolver>,
     s3_config: &State<Config>,
-    _cfg: &State<ServerConfig>,
+    cfg: &State<ServerConfig>,
     account_manager: AccountManager,
     db: DbConn,
 ) -> Result<Json<CreateAccountOutput>, ApiError> {
@@ -39,7 +40,18 @@ pub async fn create_account(
     // @TODO: Evaluate if we need to validate for entryway PDS
     let input: CreateAccountInput = body.into_inner();
     let did = input.root.did.clone();
-    let handle = input.handle.clone();
+
+    // Normalize and Ensure Valid Handle
+    let opts = HandleValidationOpts {
+        handle: input.handle,
+        did: Some(did.clone()),
+        allow_reserved: None,
+    };
+    let validation_ctx = HandleValidationContext {
+        server_config: cfg,
+        id_resolver,
+    };
+    let handle = normalize_and_validate_handle(opts, validation_ctx).await?;
 
     let did_prefix = std::env::var("DID_PREFIX").unwrap_or("did:ckb".into());
     if !check_did_str(&did) {

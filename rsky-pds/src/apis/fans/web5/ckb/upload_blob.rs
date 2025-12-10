@@ -3,17 +3,19 @@ use crate::actor_store::ActorStore;
 use crate::apis::ApiError;
 use crate::auth_verifier::AccessStandardIncludeChecks;
 use crate::db::DbConn;
-use anyhow::{Error, Result};
+use anyhow::{bail, Error, Result};
 use aws_sdk_s3::Config;
 use rocket::data::Data;
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome};
 use rocket::serde::json::Json;
 use rocket::{Request, State};
+use rsky_common::env::env_bool;
 use rsky_common::BadContentTypeError;
 use rsky_lexicon::com::atproto::repo::Blob;
 use rsky_lexicon::fans::web5::ckb::BlobOutput;
 use rsky_repo::types::{BlobConstraint, PreparedBlobRef};
+use url::Url;
 
 #[derive(Clone)]
 pub struct ContentType {
@@ -88,18 +90,35 @@ async fn inner_upload_blob(
             },
         )
         .await?;
-
-    Ok(BlobOutput {
-        blob_server: std::env::var("AWS_ENDPOINT").unwrap_or("localhost".to_owned()),
-        blob: Blob {
-            r#type: Some("blob".to_string()),
-            r#ref: Some(blobref.get_cid()?),
-            cid: None,
-            mime_type: blobref.get_mime_type().to_string(),
-            size: blobref.get_size(),
-            original: None,
-        },
-    })
+    let force = env_bool("FORCE_PATH_STYLE").unwrap_or(false);
+    if let Ok(mut url) =
+        Url::parse(&std::env::var("AWS_ENDPOINT").unwrap_or("http://localhost".to_owned()))
+    {
+        if force {
+            let path = actor_store.blob.blobstore.bucket + "/";
+            url.set_path(&path);
+        } else if let Some(old_host) = url.host_str() {
+            let new_host = actor_store.blob.blobstore.bucket + "." + old_host;
+            if url.set_host(Some(&new_host)).is_err() {
+                bail!("oss set host failed: {}", new_host);
+            }
+        } else {
+            bail!("env AWS_ENDPOINT host invalid: {}", url.as_str());
+        }
+        Ok(BlobOutput {
+            blob_server: url.as_str().to_string(),
+            blob: Blob {
+                r#type: Some("blob".to_string()),
+                r#ref: Some(blobref.get_cid()?),
+                cid: None,
+                mime_type: blobref.get_mime_type().to_string(),
+                size: blobref.get_size(),
+                original: None,
+            },
+        })
+    } else {
+        bail!("env AWS_ENDPOINT invalid");
+    }
 }
 
 #[tracing::instrument(skip_all)]

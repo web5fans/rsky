@@ -1,3 +1,4 @@
+use std::env;
 use std::str::FromStr;
 // based on https://github.com/bluesky-social/atproto/blob/main/packages/aws/src/s3.ts
 use crate::apis::ApiError;
@@ -19,6 +20,7 @@ struct MoveObject {
 pub struct S3BlobStore {
     client: s3::Client,
     pub bucket: String,
+    pub s3_did: String,
 }
 
 // Intended to work with DigitalOcean Spaces Object Storage which is an
@@ -26,7 +28,7 @@ pub struct S3BlobStore {
 impl S3BlobStore {
     pub fn new(did: String, cfg: Config) -> Self {
         let client = aws_sdk_s3::Client::from_conf(cfg);
-        let bucket = if did.len() > 32 {
+        let s3_did = if did.len() > 32 {
             if let Some(last) = did.split(":").last() {
                 if last.len() > 32 {
                     last[last.len() - 32..].to_string()
@@ -39,7 +41,12 @@ impl S3BlobStore {
         } else {
             did
         };
-        S3BlobStore { client, bucket }
+        let bucket = env::var("AWS_BUCKET").unwrap_or(s3_did.clone());
+        S3BlobStore {
+            client,
+            bucket,
+            s3_did,
+        }
     }
 
     pub fn creator(cfg: Config) -> Box<dyn Fn(String) -> S3BlobStore> {
@@ -51,19 +58,19 @@ impl S3BlobStore {
     }
 
     fn get_tmp_path(&self, key: &String) -> String {
-        format!("tmp/{0}/{1}", self.bucket, key)
+        format!("tmp/{0}/{1}", self.s3_did, key)
     }
 
     fn get_source_path(&self, key: &String) -> String {
-        format!("{0}/tmp/{1}/{2}", self.bucket, self.bucket, key)
+        format!("{0}/tmp/{1}/{2}", self.bucket, self.s3_did, key)
     }
 
     fn get_stored_path(&self, cid: Cid) -> String {
-        format!("blocks/{0}/{1}", self.bucket, cid)
+        format!("blocks/{0}/{1}", self.s3_did, cid)
     }
 
     fn get_quarantined_path(&self, cid: Cid) -> String {
-        format!("quarantine/{0}/{1}", self.bucket, cid)
+        format!("quarantine/{0}/{1}", self.s3_did, cid)
     }
 
     pub async fn put_temp(&self, bytes: Vec<u8>) -> Result<String> {
