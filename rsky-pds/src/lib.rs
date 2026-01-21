@@ -10,6 +10,7 @@ use ckb_sdk::NetworkType;
 use event_emitter_rs::EventEmitter;
 use lazy_static::lazy_static;
 use rocket::http::uri::Host;
+use rsky_common::wait;
 pub mod account_manager;
 pub mod actor_store;
 pub mod apis;
@@ -238,7 +239,21 @@ pub async fn build_rocket(cfg: Option<RocketConfig>) -> Rocket<Build> {
         )),
     };
     let mut background_sequencer = sequencer.sequencer.write().await.clone();
-    tokio::spawn(async move { background_sequencer.start().await });
+    tokio::spawn(async move {
+        loop {
+            match background_sequencer.start().await {
+                Err(e) => {
+                    tracing::error!("background sequencer running error: {}", e.to_string());
+                    wait(5000);
+                    continue;
+                }
+                Ok(_) => {
+                    tracing::info!("other background sequencer already running");
+                    break;
+                }
+            }
+        }
+    });
 
     let credentials = aws_sdk_s3::config::Credentials::new(
         env::var("AWS_ACCESS_KEY_ID").unwrap_or("test".to_owned()), // Access Key ID

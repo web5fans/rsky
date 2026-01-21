@@ -15,7 +15,6 @@ use futures::{Stream, StreamExt};
 use rsky_common::time::SECOND;
 use rsky_common::{cbor_to_struct, wait};
 use rsky_repo::types::CommitDataWithOps;
-use std::cmp;
 use std::pin::Pin;
 use std::task::{Context, Poll, Waker};
 
@@ -190,10 +189,11 @@ impl Sequencer {
 
     async fn exponential_backoff(&mut self) {
         self.tries_with_no_results += 1;
-        let wait_time = cmp::min(
-            2u64.checked_pow(self.tries_with_no_results).unwrap_or(2),
-            SECOND as u64,
-        );
+        let wait_time = if self.tries_with_no_results <= 9 {
+            2u64.checked_pow(self.tries_with_no_results).unwrap_or(2)
+        } else {
+            SECOND as u64
+        };
         wait(wait_time);
         if let Some(waker) = self.waker.take() {
             waker.wake();

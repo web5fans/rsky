@@ -51,7 +51,7 @@ pub async fn subscribe_repos<'a>(
         let mut outbox = Outbox::new(
             sequencer_lock.clone(),
             Some(OutboxOpts {
-                max_buffer_size: cfg.subscription.repo_backfill_limit_ms as usize,
+                max_buffer_size: cfg.subscription.max_buffer as usize,
             })
         );
 
